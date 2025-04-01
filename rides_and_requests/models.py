@@ -18,7 +18,7 @@ class Ride(TimeStampedModel):
     id = models.UUIDField(
         default=uuid.uuid4, editable=False, primary_key=True, unique=True
     )
-    user = models.ForeignKey(User, related_name="rides", on_delete=models.CASCADE())
+    user = models.ForeignKey(User, related_name="rides", on_delete=models.CASCADE)
     departure_town = models.CharField(max_length=100)
     arrival_town = models.CharField(max_length=100)
     departure_datetime = models.DateTimeField()
@@ -32,7 +32,7 @@ class RideAlert(TimeStampedModel):
     id = models.UUIDField(
         default=uuid.uuid4, editable=False, primary_key=True, unique=True
     )
-    user = models.ForeignKey(User, related_name="rides", on_delete=models.CASCADE())
+    user = models.ForeignKey(User, related_name="ride_alerts", on_delete=models.CASCADE)
     departure_town = models.CharField(max_length=100)
     arrival_town = models.CharField(max_length=100)
     departure_datetime = models.DateTimeField()
@@ -44,7 +44,7 @@ class RideRequest(TimeStampedModel):
     id = models.UUIDField(
         default=uuid.uuid4, editable=False, primary_key=True, unique=True
     )
-    user = models.ForeignKey(User, related_name="ride_requests", on_delete=models.CASCADE())
+    user = models.ForeignKey(User, related_name="ride_requests", on_delete=models.CASCADE)
     departure_town = models.CharField(max_length=100)
     arrival_town = models.CharField(max_length=100)
     departure_datetime = models.DateTimeField()

@@ -1,7 +1,6 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
-from requests import delete
 
 from rides_and_requests.models import Ride, RideRequest, RideAlert
 
@@ -41,6 +40,19 @@ class RideModelTest(TestCase):
         
         self.assertEqual(ride.user.username, "modeltestuser")
         self.assertEqual(len(Ride.objects.all()), 2)
+        
+    def test_create_ride_with_invalid_number_of_seats(self):        
+        with self.assertRaises(ValidationError) as context:
+            ride = Ride.objects.create(
+                user=self.user,
+                departure_town="Town A",
+                arrival_town="Town B",
+                departure_datetime=timezone.now(),
+                available_seats=0,
+                price_per_seat=1000,
+            )
+
+        self.assertEqual(str(context.exception), str(["You cant create a ride with less that 1 seat available"]))
         
         
     def test_update_ride(self):
