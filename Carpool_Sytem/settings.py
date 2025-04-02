@@ -42,11 +42,15 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
+    
+    
     "drf_yasg",
     "rest_framework_simplejwt.token_blacklist",
     "rest_framework",
+    "django_celery_beat",
+    "django_celery_results",
     # "debug_toolbar",
+    
     
     "accounts",
     "rides_and_requests",
@@ -132,6 +136,16 @@ DATABASES = {
     }
 }
 
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": os.environ.get("REDIS_INSTANCE_URL"),
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         },
+#     }
+# }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -157,7 +171,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+# TIME_ZONE = "UTC"
+TIME_ZONE = "Africa/Douala"
 
 USE_I18N = True
 
@@ -169,6 +184,18 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_TIMEOUT = 300
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
+
+ADMINS = [(os.environ.get("MAIN_ADMIN_NAME"), os.environ.get("MAIN_ADMIN_EMAIL"))]
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -176,6 +203,24 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.User"
 
+
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+FRONTEND_URL = os.environ.get("FRONTEND_URL")
+
+# Celery Configuration Options
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+
+# Celery Configuration
+CELERY_BROKER_URL = os.environ.get("REDIS_INSTANCE_URL_2")
+CELERY_RESULT_BACKEND = "django-db"  # To store task results in the Django database
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Africa/Douala"  # Set your desired timezone
+
+# Celery Beat Configuration (for periodic tasks)
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
