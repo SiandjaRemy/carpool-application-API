@@ -8,6 +8,7 @@ from django.utils import timezone
 
 
 from rides_and_requests.models import Ride, RideRequest, RideAlert
+from rides_and_requests.permissions import IsCreatorOrReadOnly
 from rides_and_requests.serializers import (
     BlankSerializer,
     RideModelSerializer,
@@ -21,7 +22,7 @@ class RideModelViewset(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "patch", "delete"]
     serializer_class = RideModelSerializer
     pagination_class = CustomPageNumberPagination
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsCreatorOrReadOnly]
     
     def get_queryset(self):
         today = timezone.now()

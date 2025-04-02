@@ -107,7 +107,7 @@ class UserDataSerializer(UserSerializer):
 class SimpleUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "email", "username", "phone_number"]
+        fields = ["id", "email", "username", "first_name", "last_name"]
 
 
 class PasswordChangeSerializer(serializers.Serializer):
