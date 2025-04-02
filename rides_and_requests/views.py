@@ -18,6 +18,7 @@ from rides_and_requests.paginators import CustomPageNumberPagination
 
 
 class RideModelViewset(viewsets.ModelViewSet):
+    http_method_names = ["get", "post", "patch", "delete"]
     serializer_class = RideModelSerializer
     pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthenticatedOrReadOnly]
