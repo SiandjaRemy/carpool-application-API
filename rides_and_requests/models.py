@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 import uuid
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 from rides_and_requests.validators import validate_number_of_seats_greater_then_zero
 
@@ -24,7 +24,7 @@ class Ride(TimeStampedModel):
     departure_town = models.CharField(max_length=100)
     arrival_town = models.CharField(max_length=100)
     departure_datetime = models.DateTimeField()
-    available_seats = models.IntegerField(validators=[MinValueValidator(1),])
+    available_seats = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10),])
     price_per_seat = models.FloatField()
     is_active = models.BooleanField(default=True)
     
@@ -46,7 +46,7 @@ class RideAlert(TimeStampedModel):
     departure_town = models.CharField(max_length=100)
     arrival_town = models.CharField(max_length=100)
     departure_datetime = models.DateTimeField()
-    available_seats = models.IntegerField(validators=[MinValueValidator(1)])
+    available_seats = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
     is_active = models.BooleanField(default=True)
     
     
@@ -58,7 +58,7 @@ class RideRequest(TimeStampedModel):
     departure_town = models.CharField(max_length=100)
     arrival_town = models.CharField(max_length=100)
     departure_datetime = models.DateTimeField()
-    required_seats = models.IntegerField(validators=[MinValueValidator(1)])
+    required_seats = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
     price_per_seat = models.FloatField()
     is_active = models.BooleanField(default=True)
 

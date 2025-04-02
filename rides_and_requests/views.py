@@ -44,8 +44,8 @@ class RideModelViewset(viewsets.ModelViewSet):
         return BlankSerializer
     
     
-    @action(methods=["GET"], detail=False, url_path="my-rides")
-    def my_rides(self):
+    @action(methods=["GET"], detail=False, url_path="my-rides", permission_classes=[IsAuthenticated])
+    def my_rides(self, request):
         user = self.request.user
         rides = (
             Ride.objects.select_related("user")
@@ -62,8 +62,8 @@ class RideModelViewset(viewsets.ModelViewSet):
         return Response(my_rides.data, status=status.HTTP_200_OK)
             
             
-    @action(methods=["PATCH"], detail=True, url_path="toggle-active")
-    def toggle_active(self, pk=None):
+    @action(methods=["PATCH"], detail=True, url_path="toggle-active", permission_classes=[IsAuthenticated])
+    def toggle_active(self, request, pk=None):
         if not pk:
             raise ValidationError({"error": "pk is required"})
         user = self.request.user
