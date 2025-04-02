@@ -1,3 +1,12 @@
-from django.shortcuts import render
+from rest_framework import viewsets
 
-# Create your views here.
+from rides_and_requests.serializers import (
+    RideModelSerializer,
+    RideRequestModelSerializer,
+    RideAlertModelSerializer,
+)
+
+
+class RideModelViewset(viewsets.ModelViewSet):
+    serializer_class = RideModelSerializer
+    pagination_class = None
