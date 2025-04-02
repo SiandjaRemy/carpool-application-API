@@ -30,6 +30,6 @@ urlpatterns = [
     # path("__debug__/", include("debug_toolbar.urls")),
 
     path('admin/', admin.site.urls),
-    # path('auth/', include('accounts.urls')),
+    path('auth/', include('accounts.urls')),
     path('carpool/', include('rides_and_requests.urls')),
 ]
