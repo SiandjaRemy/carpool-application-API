@@ -45,3 +45,7 @@ class RideAlertModelSerializer(serializers.ModelSerializer):
         validated_data["user"] = user
         return super().create(validated_data)
 
+
+
+class BlankSerializer(serializers.Serializer):
+    pass
