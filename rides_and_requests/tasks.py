@@ -5,8 +5,11 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
+import logging
+
 from rides_and_requests.models import Ride, RideAlert
 
+logger = logging.getLogger()
 
 def alert_user_via_email(emails, subject, message):
     send_mail(
@@ -40,9 +43,12 @@ def alert_users_for_ride(ride_id):
         for alert in list(alerts):
             user_mails.append(alert.user.email)
             print(f"Hey {alert.user}, a ride from {alert.departure_town} to {alert.arrival_town} on {ride.departure_datetime} was just created")
-        
-        alert_user_via_email(emails=user_mails, subject=subject, message=message)
-        
+        try:
+            alert_user_via_email(emails=user_mails, subject=subject, message=message)
+            logger.info(f"emails sucessfully sent")
+        except Exception as e:
+            logger.error(f"An error occured: {e}")
+            raise
     else:
         print("No alerts found")
     return "Done"
