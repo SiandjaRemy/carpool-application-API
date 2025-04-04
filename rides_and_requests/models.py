@@ -29,6 +29,10 @@ class Ride(TimeStampedModel):
     is_active = models.BooleanField(default=True)
     
     
+    def __str__(self):
+        date_time = self.departure_datetime.strftime("%Y-%m-%d - %H:%M:%S")
+        return f"{self.user} will ride from {self.departure_town} to {self.arrival_town} on {date_time}"
+    
     # def clean(self):
     #     validate_number_of_seats_greater_then_zero(self, source="ride")
 
@@ -49,6 +53,10 @@ class RideAlert(TimeStampedModel):
     available_seats = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
     is_active = models.BooleanField(default=True)
     
+    def __str__(self):
+        date_time = self.departure_datetime.strftime("%Y-%m-%d - %H:%M:%S")
+        return f"{self.user} wants a ride from {self.departure_town} to {self.arrival_town} on {date_time}"
+
     
 class RideRequest(TimeStampedModel):
     id = models.UUIDField(
@@ -62,5 +70,8 @@ class RideRequest(TimeStampedModel):
     price_per_seat = models.FloatField()
     is_active = models.BooleanField(default=True)
 
+    def __str__(self):
+        date_time = self.departure_datetime.strftime("%Y-%m-%d - %H:%M:%S")
+        return f"{self.user} needs a ride from {self.departure_town} to {self.arrival_town} on {date_time}"
 
 
