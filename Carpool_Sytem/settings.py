@@ -42,16 +42,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    
-    
     "drf_yasg",
     "rest_framework_simplejwt.token_blacklist",
     "rest_framework",
     "django_celery_beat",
     "django_celery_results",
     # "debug_toolbar",
-    
-    
     "accounts",
     "rides_and_requests",
 ]
@@ -105,6 +101,9 @@ DJOSER = {
     },
 }
 
+# Setting for the expiratory time of the password reset token
+PASSWORD_RESET_TIMEOUT = 60 * 5
+
 ROOT_URLCONF = "Carpool_Sytem.urls"
 
 TEMPLATES = [
@@ -145,6 +144,68 @@ DATABASES = {
 #         },
 #     }
 # }
+
+
+# if not DEBUG:
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    "filters": {
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse"
+        }
+    },
+    'formatters': {
+        'verbose': {
+            "format": "{levelname} {asctime:s} {name} {module}.py (line {lineno:d}) {funcName} {message}",
+            'style': '{',
+        },
+        'simple': {
+            "format": "{levelname} {asctime:s} {name} {message}",
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            "level": "DEBUG",
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            "level": "INFO",
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'django_api.log',
+            'formatter': 'verbose',
+        },
+        'error_file': {
+            "level": "INFO",
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'django_api.log',
+            'formatter': 'verbose',
+        },
+        "mail_admins": {
+            "level": "ERROR",
+            "filters":  ["require_debug_false"],
+            "class": "django.utils.log.AdminEmailHandler",
+            "include_html": True,
+            "formatter": "verbose",
+        },
+        
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console', 'error_file', 'mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django': {
+            'level': 'INFO',
+            'handlers': ['console', 'file'],
+            'propagate': True,
+        },
+    },
+}
+
 
 
 # Password validation
@@ -195,6 +256,7 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
 
 ADMINS = [(os.environ.get("MAIN_ADMIN_NAME"), os.environ.get("MAIN_ADMIN_EMAIL"))]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

@@ -13,3 +13,6 @@ def email_user(email, subject, message):
         recipient_list=[email],
         fail_silently=False,  # Set to true in production once you've tested
     )
+
+    print("")
+    return "Done"

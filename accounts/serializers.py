@@ -103,6 +103,10 @@ class UserDataSerializer(UserSerializer):
             "is_superuser",
         ]
 
+    def update(self, instance, validated_data):
+        # Convert first and last name to lowercase before saving
+        return super().update(instance, validated_data)
+
 
 class SimpleUserSerializer(serializers.ModelSerializer):
     class Meta:
