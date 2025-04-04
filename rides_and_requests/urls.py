@@ -7,6 +7,7 @@ from rides_and_requests import views
 router = DefaultRouter()
 
 router.register("rides", views.RideModelViewset, basename="rides")
+router.register("requests", views.RideRequestModelViewset, basename="requests")
 
 urlpatterns = [
     path("", include(router.urls)),
