@@ -102,7 +102,8 @@ DJOSER = {
 }
 
 # Setting for the expiratory time of the password reset token
-PASSWORD_RESET_TIMEOUT = 60 * 5
+# PASSWORD_RESET_TIMEOUT = 60 * 5 # 5 minutes
+PASSWORD_RESET_TIMEOUT = 60 * 10 # 10 minutes
 
 ROOT_URLCONF = "Carpool_Sytem.urls"
 

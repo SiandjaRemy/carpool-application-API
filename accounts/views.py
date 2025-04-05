@@ -122,13 +122,12 @@ class PasswordResetView(APIView):
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             # Construct the reset link. Be sure to configure your frontend URL.
             reset_link = f"{settings.FRONTEND_URL}authentication/password-reset?uid={uidb64}&token={token}"  # Use settings
-
+            # print(f"Token: {token}")
+            # print(f"uidb64: {uidb64}")
             try:
-                subject = ("Password Reset Request",)
-                message = (
-                    f"Please click the link below to reset your password:\n{reset_link}",
-                )
-
+                subject = str("Password Reset Request")
+                message = str(f"Please click the link below to reset your password:\n{reset_link}")
+                
                 # Celery now handles email sending
                 email_user.delay(email=email, subject=subject, message=message)
                 return Response(

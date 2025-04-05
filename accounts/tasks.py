@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger()
 
 
-@shared_task()
+@shared_task(name="email_a_user")
 def email_user(email, subject, message):
     try:
         send_mail(
