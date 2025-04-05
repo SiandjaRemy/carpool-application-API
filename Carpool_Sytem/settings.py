@@ -103,7 +103,7 @@ DJOSER = {
 
 # Setting for the expiratory time of the password reset token
 # PASSWORD_RESET_TIMEOUT = 60 * 5 # 5 minutes
-PASSWORD_RESET_TIMEOUT = 60 * 10 # 10 minutes
+PASSWORD_RESET_TIMEOUT = 60 * 10  # 10 minutes
 
 ROOT_URLCONF = "Carpool_Sytem.urls"
 
@@ -149,64 +149,63 @@ DATABASES = {
 
 # if not DEBUG:
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    "filters": {
-        "require_debug_false": {
-            "()": "django.utils.log.RequireDebugFalse"
-        }
-    },
-    'formatters': {
-        'verbose': {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
+    "formatters": {
+        "verbose": {
             "format": "{levelname} {asctime:s} {name} {module}.py (line {lineno:d}) {funcName} {message}",
-            'style': '{',
+            "style": "{",
         },
-        'simple': {
+        "simple": {
             "format": "{levelname} {asctime:s} {name} {message}",
-            'style': '{',
+            "style": "{",
         },
     },
-    'handlers': {
-        'console': {
+    "handlers": {
+        "console": {
             "level": "DEBUG",
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
-        'file': {
+        "file": {
             "level": "INFO",
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'django_api.log',
-            'formatter': 'verbose',
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "django_api.log",
+            "formatter": "verbose",
         },
-        'error_file': {
+        "error_file": {
             "level": "INFO",
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'django_api.log',
-            'formatter': 'verbose',
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "django_api.log",
+            "formatter": "verbose",
         },
         "mail_admins": {
             "level": "ERROR",
-            "filters":  ["require_debug_false"],
+            "filters": ["require_debug_false"],
             "class": "django.utils.log.AdminEmailHandler",
             "include_html": True,
             "formatter": "verbose",
         },
-        
     },
-    'loggers': {
-        '': {
-            'handlers': ['console', 'error_file', 'mail_admins'],
-            'level': 'ERROR',
-            'propagate': False,
+    "loggers": {
+        "": {
+            "handlers": ["console", "error_file", "mail_admins"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        'django': {
-            'level': 'INFO',
-            'handlers': ['console', 'file'],
-            'propagate': True,
+        "django": {
+            "level": "INFO",
+            "handlers": ["console", "file"],
+            "propagate": True,
+        },
+        "rides_and_requests": {
+            "handlers": ["file", "mail_admins"],
+            "level": "ERROR",
+            "propagate": False,
         },
     },
 }
-
 
 
 # Password validation

@@ -9,19 +9,19 @@ import logging
 
 from rides_and_requests.models import Ride, RideAlert
 
-logger = logging.getLogger()
+logger = logging.getLogger("rides_and_requests")
 
 def alert_user_via_email(emails, subject, message):
     send_mail(
         subject=subject,
         message=message,
         from_email=settings.EMAIL_HOST_USER,  # Use settings
-        recipient_list=[emails],
+        recipient_list=emails,
         fail_silently=False,  # Set to true in production once you've tested
     )
 
 
-@shared_task()
+@shared_task(name="alert_users_for_ride")
 def alert_users_for_ride(ride_id):
     today = timezone.now()
     try:
@@ -45,9 +45,9 @@ def alert_users_for_ride(ride_id):
             print(f"Hey {alert.user}, a ride from {alert.departure_town} to {alert.arrival_town} on {ride.departure_datetime} was just created")
         try:
             alert_user_via_email(emails=user_mails, subject=subject, message=message)
-            logger.info(f"emails sucessfully sent")
+            logger.info(f"Emails successfully sent to {len(user_mails)} users")
         except Exception as e:
-            logger.error(f"An error occured: {e}")
+            logger.error(f"Failed to send emails: {str(e)}")
             raise
     else:
         print("No alerts found")
