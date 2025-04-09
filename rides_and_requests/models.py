@@ -10,7 +10,7 @@ User = get_user_model()
 
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-    modeified_at = models.DateTimeField(auto_now=True)
+    modified_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         abstract = True

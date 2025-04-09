@@ -17,6 +17,11 @@ from datetime import timedelta
 
 load_dotenv()
 
+
+import mimetypes
+
+mimetypes.add_type("application/javascript", ".js")
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -42,18 +47,22 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    
+    
+    "accounts",
+    "rides_and_requests",
+    
+    
     "drf_yasg",
     "rest_framework_simplejwt.token_blacklist",
     "rest_framework",
     "django_celery_beat",
     "django_celery_results",
-    # "debug_toolbar",
-    "accounts",
-    "rides_and_requests",
+    "debug_toolbar",
 ]
 
 MIDDLEWARE = [
-    # "debug_toolbar.middleware.DebugToolbarMiddleware",  # Debug toolbar
+    "debug_toolbar.middleware.DebugToolbarMiddleware",  # Debug toolbar
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -136,15 +145,15 @@ DATABASES = {
     }
 }
 
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": os.environ.get("REDIS_INSTANCE_URL"),
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         },
-#     }
-# }
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get("REDIS_INSTANCE_URL"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
 
 
 # if not DEBUG:
@@ -255,7 +264,10 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
 
-ADMINS = [(os.environ.get("MAIN_ADMIN_NAME"), os.environ.get("MAIN_ADMIN_EMAIL"))]
+MAIN_ADMIN_NAME = os.environ.get("MAIN_ADMIN_NAME")
+MAIN_ADMIN_EMAIL = os.environ.get("MAIN_ADMIN_EMAIL")
+
+ADMINS = [(MAIN_ADMIN_NAME, MAIN_ADMIN_EMAIL)]
 
 
 # Default primary key field type
@@ -278,11 +290,15 @@ CELERY_TASK_TIME_LIMIT = 30 * 60
 
 # Celery Configuration
 CELERY_BROKER_URL = os.environ.get("REDIS_INSTANCE_URL_2")
-CELERY_RESULT_BACKEND = "django-db"  # To store task results in the Django database
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Africa/Douala"  # Set your desired timezone
 
 # Celery Beat Configuration (for periodic tasks)
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
+
+# CELERY RESULTS SETTINGS
+CELERY_RESULT_BACKEND = "django-db"  # To store task results in the Django database
+CELERY_RESULT_SERIALIZER = "json"
+
+broker_connection_retry_on_startup = True
