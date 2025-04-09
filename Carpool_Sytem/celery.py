@@ -22,7 +22,7 @@ app.autodiscover_tasks()
 # Celery Beat Configuration 
 app.conf.beat_schedule = {
     'deactivate-expired-rides-every-5-minutes': {
-        'task': 'rides_and_requests.tasks.deactivate_expired_rides',  # Replace with the actual path to your task
+        'task': 'rides.tasks.deactivate_expired_rides',  # Replace with the actual path to your task
         'schedule': crontab(minute='*/5'),  # Runs every minute
     },
 }

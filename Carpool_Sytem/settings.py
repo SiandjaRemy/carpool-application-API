@@ -50,7 +50,12 @@ INSTALLED_APPS = [
     
     
     "accounts",
-    "rides_and_requests",
+
+    "rides",
+    "ride_alerts",
+    "ride_requests",
+    "passengers",
+    "utils",
     
     
     "drf_yasg",

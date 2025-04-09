@@ -31,5 +31,8 @@ urlpatterns = [
 
     path('admin/', admin.site.urls),
     path('auth/', include('accounts.urls')),
-    path('carpool/', include('rides_and_requests.urls')),
+    path('/', include('rides.urls')),
+    path('/', include('ride_requests.urls')),
+    path('/', include('ride_alerts.urls')),
+    path('/', include('passengers.urls')),
 ]

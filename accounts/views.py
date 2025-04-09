@@ -30,7 +30,7 @@ from accounts.serializers import (
     UserCreateSerializer,
     UserDataSerializer,
 )
-from accounts.tasks import email_user
+from utils.tasks import email_user
 
 
 User = get_user_model()
