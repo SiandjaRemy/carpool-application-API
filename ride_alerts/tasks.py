@@ -13,8 +13,7 @@ from rides.models import Ride
 from utils.send_emails import alert_users_via_email
 
 
-logger = logging.getLogger("rides_and_requests")
-
+logger = logging.getLogger("background")
 
 
 @shared_task(name="alert_users_for_ride")
@@ -52,5 +51,3 @@ def alert_users_for_ride(ride_id):
     else:
         return "No active alerts found"
     return "Done"
-
-

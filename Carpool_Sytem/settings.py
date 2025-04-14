@@ -213,7 +213,7 @@ LOGGING = {
             "handlers": ["console", "file"],
             "propagate": True,
         },
-        "rides_and_requests": {
+        "background": {
             "handlers": ["file", "mail_admins"],
             "level": "ERROR",
             "propagate": False,

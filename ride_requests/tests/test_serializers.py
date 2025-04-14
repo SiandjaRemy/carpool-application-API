@@ -3,14 +3,14 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient, APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from rides.serializers import RideModelSerializer
+from ride_requests.serializers import RideRequestModelSerializer
 
 from datetime import timedelta, datetime
 from django.utils import timezone
 
 User = get_user_model()
 
-class RideSerializersTest(APITestCase):
+class RideRequestSerializersTest(APITestCase):
     
     def setUp(self):
         self.client = APIClient()
@@ -24,18 +24,18 @@ class RideSerializersTest(APITestCase):
         
         self.departure_datetime = timezone.now() + timedelta(days=4)
 
-    def test_ride_creation(self):
+    def test_ride_request_creation(self):
         data = {
             'departure_town': 'Town A',
             'arrival_town': 'Town B',
             'departure_datetime': self.departure_datetime,
-            'available_seats': 2,
+            'required_seats': 2,
             'price_per_seat': 2000,
         }
         context = {
             "user": self.user
         }
-        serializer = RideModelSerializer(data=data, context=context)
+        serializer = RideRequestModelSerializer(data=data, context=context)
         self.assertTrue(serializer.is_valid())
         ride = serializer.save()
         self.assertEqual(ride.departure_town, data['departure_town'])
@@ -47,13 +47,13 @@ class RideSerializersTest(APITestCase):
             # 'departure_town': 'Town A',
             'arrival_town': 'Town B',
             'departure_datetime': self.departure_datetime,
-            'available_seats': 2,
+            'required_seats': 2,
             'price_per_seat': 2000,
         }
         context = {
             "user": self.user
         }
-        serializer = RideModelSerializer(data=data, context=context)
+        serializer = RideRequestModelSerializer(data=data, context=context)
         
         self.assertFalse(serializer.is_valid())
 
