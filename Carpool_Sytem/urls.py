@@ -31,8 +31,8 @@ urlpatterns = [
 
     path('admin/', admin.site.urls),
     path('auth/', include('accounts.urls')),
-    path('/', include('rides.urls')),
-    path('/', include('ride_requests.urls')),
-    path('/', include('ride_alerts.urls')),
-    path('/', include('passengers.urls')),
+    path('rides/', include('rides.urls')),
+    path('requests/', include('ride_requests.urls')),
+    path('alerts/', include('ride_alerts.urls')),
+    path('passengers/', include('passengers.urls')),
 ]

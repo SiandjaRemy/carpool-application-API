@@ -7,8 +7,7 @@ from passengers import views
 
 urlpatterns = []
 
-# urlpatterns = [
-#     path("for_user/<uuid:user_pk>/", views.GetUserReviewGenericView.as_view(), name="get_reviews_for_user"),
-#     path("for_transaction/", views.CreateReviewForTransactionGenericView.as_view(), name="create_reviews_for_transaction"),
-#     path("for_transaction/<uuid:transaction_pk>", views.GetReviewsForTransactionGenericView.as_view(), name="get_reviews_for_transaction"),
-# ]
+urlpatterns = [
+    path("register/", views.RegisterPassengerForRideGenericView.as_view(), name="register_passenger_for_ride"),
+    path("for_ride/<uuid:ride_pk>", views.GetPassengersForRideGenericView.as_view(), name="get_passengers_for_ride"),
+]

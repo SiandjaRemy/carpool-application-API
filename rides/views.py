@@ -26,9 +26,8 @@ class RideModelViewset(viewsets.ModelViewSet):
     def get_queryset(self):
         current_time = timezone.now()
         queryset = (
-            Ride()
-            .objects.select_related("user")
-            .filter(is_active=True, departure_datetime__gte=current_time)
+            Ride.objects.select_related("user")
+            .filter(is_active=True, departure_datetime__gte=current_time, available_seats__gt=0)
             .order_by("-created_at")
         )
         return queryset

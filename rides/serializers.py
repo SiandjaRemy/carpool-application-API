@@ -17,7 +17,7 @@ class RideModelSerializer(serializers.ModelSerializer):
         model= Ride
         fields= "__all__"
         
-        read_only_fields = ["user", "is_active"]
+        read_only_fields = ["user", "is_active", "is_full"]
 
     def create(self, validated_data):
         user = self.context["user"]

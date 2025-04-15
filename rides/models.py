@@ -27,6 +27,7 @@ class Ride(TimeStampedModel):
     available_seats = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10),])
     price_per_seat = models.FloatField()
     is_active = models.BooleanField(default=True)
+    is_full = models.BooleanField(default=False)
     
     
     def __str__(self):
