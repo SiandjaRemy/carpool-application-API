@@ -35,7 +35,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", default=False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -47,17 +47,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    
-    
     "accounts",
-
     "rides",
     "ride_alerts",
     "ride_requests",
     "passengers",
     "utils",
-    
-    
     "drf_yasg",
     "rest_framework_simplejwt.token_blacklist",
     "rest_framework",
@@ -143,12 +138,24 @@ WSGI_APPLICATION = "Carpool_Sytem.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+if DEBUG:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("LOCAL_DB_NAME"),
+            "USER": os.environ.get("LOCAL_DB_USER"),
+            "PASSWORD": os.environ.get("LOCAL_DB_PASSWORD"),
+            "HOST": os.environ.get("LOCAL_DB_HOST"),
+            "PORT": os.environ.get("LOCAL_DB_PORT"),
+        }
+    }
 
 CACHES = {
     "default": {
@@ -162,11 +169,12 @@ CACHES = {
 
 
 if not DEBUG:
-
     LOGGING = {
         "version": 1,
         "disable_existing_loggers": False,
-        "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
+        "filters": {
+            "require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}
+        },
         "formatters": {
             "verbose": {
                 "format": "{levelname} {asctime:s} {name} {module}.py (line {lineno:d}) {funcName} {message}",
@@ -221,7 +229,6 @@ if not DEBUG:
             },
         },
     }
-
 
 
 # Password validation

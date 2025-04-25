@@ -10,9 +10,9 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
    openapi.Info(
-      title="Extra Weight Sales API",
+      title="Carpool Application API",
       default_version='v1',
-      description="Confidential",
+      description="An API for a carpool system",
       terms_of_service="https://www.google.com/policies/terms/",
       contact=openapi.Contact(email="remysiandja@gmail.com"),
       license=openapi.License(name="BSD License"),
