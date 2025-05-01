@@ -26,7 +26,7 @@ class RideModelSerializer(serializers.ModelSerializer):
         try:
             with transaction.atomic():
                 new_ride = Ride.objects.create(**validated_data)
-                alert_users_for_ride.delay(new_ride.id)
+                # alert_users_for_ride.delay(new_ride.id)
                 return new_ride
         except Exception as e:
             raise serializers.ValidationError(str(e))
