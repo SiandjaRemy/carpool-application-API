@@ -2,10 +2,6 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, generics
-from rest_framework.mixins import UpdateModelMixin
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.throttling import AnonRateThrottle
-from rest_framework.parsers import MultiPartParser, FormParser
 
 from rest_framework_simplejwt.tokens import (
     RefreshToken,
@@ -13,8 +9,6 @@ from rest_framework_simplejwt.tokens import (
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
-from django.core.exceptions import ValidationError
 from django.utils.encoding import force_bytes
 from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -30,14 +24,10 @@ from accounts.serializers import (
     UserCreateSerializer,
     UserDataSerializer,
 )
-from utils.tasks import email_user
+from accounts.tasks import email_user
 
 
 User = get_user_model()
-
-
-class TwiceDailyThrottle(AnonRateThrottle):
-    rate = "2/day"  # 2 requests per day
 
 
 class UserView(generics.RetrieveUpdateAPIView):
@@ -126,10 +116,12 @@ class PasswordResetView(APIView):
             # print(f"uidb64: {uidb64}")
             try:
                 subject = str("Password Reset Request")
-                message = str(f"Please click the link below to reset your password:\n{reset_link}")
-                
+                message = str(
+                    f"Please click the link below to reset your password:\n{reset_link}"
+                )
+
                 # Celery now handles email sending
-                email_user.delay(email=email, subject=subject, message=message)
+                # email_user.delay(email=email, subject=subject, message=message)
                 return Response(
                     {"detail": "Password reset email sent."}, status=status.HTTP_200_OK
                 )

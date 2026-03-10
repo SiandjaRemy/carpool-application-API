@@ -7,10 +7,14 @@ from django.conf import settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent  # Project root directory
 DEBUG = settings.DEBUG  # Use Django's DEBUG setting
-APP_LOG_DIR = BASE_DIR / "app_logs"  # Central log directory
-ERROR_LOG_DIR = BASE_DIR / "error_logs"  # Central log directory
+
+LOG_DIR = BASE_DIR / "logs"  # Central log directory
+APP_LOG_DIR = LOG_DIR / "app_logs"  # App log directory
+ERROR_LOG_DIR = LOG_DIR / "error_logs"  # Error log directory
+
 os.makedirs(APP_LOG_DIR, exist_ok=True)  # Ensure directory exists
 os.makedirs(ERROR_LOG_DIR, exist_ok=True)  # Ensure directory exists
+
 CURRENT_DATE = datetime.now().strftime("%Y-%m-%d")  # Current date for log rotation
 
 LOGGING = {

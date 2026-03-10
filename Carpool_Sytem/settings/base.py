@@ -55,11 +55,7 @@ INSTALLED_APPS = [
 
 PROJECT_APPS = [
     "accounts",
-    "rides",
-    "ride_alerts",
-    "ride_requests",
-    "passengers",
-    "reservations",
+    "carpool",
 ]
 
 INSTALLED_APPS += PROJECT_APPS

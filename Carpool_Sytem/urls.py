@@ -39,8 +39,5 @@ urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
     path("admin/", admin.site.urls),
     path("auth/", include("accounts.urls")),
-    path("rides/", include("rides.urls")),
-    path("requests/", include("ride_requests.urls")),
-    path("alerts/", include("ride_alerts.urls")),
-    path("reservations/", include("reservations.urls")),
+    path("carpool/", include("carpool.urls")),
 ]

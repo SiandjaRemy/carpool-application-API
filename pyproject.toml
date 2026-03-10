@@ -1,0 +1,24 @@
+[project]
+name = "carpool-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "celery>=5.6.2",
+    "django-celery-beat>=2.9.0",
+    "django-celery-results>=2.6.0",
+    "django-redis>=6.0.0",
+    "djangorestframework>=3.16.1",
+    "djangorestframework-simplejwt>=5.5.1",
+    "djoser>=2.3.3",
+    "drf-nested-routers>=0.95.0",
+    "drf-yasg>=1.21.15",
+    "psycopg2-binary>=2.9.11",
+    "python-dotenv>=1.2.2",
+]
+
+[dependency-groups]
+dev = [
+    "django-debug-toolbar>=6.2.0",
+]

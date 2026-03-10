@@ -2,10 +2,17 @@ from __future__ import absolute_import, unicode_literals
 import os
 
 from celery import Celery
-from celery.schedules import schedule, crontab
+from celery.schedules import crontab
 
 # Set the default Django settings module for the 'celery' program.
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Carpool_Sytem.settings.production")
+os.environ.setdefault(
+    "DJANGO_SETTINGS_MODULE",
+    (
+        "Carpool_Sytem.settings.prod"
+        if os.environ.get("DJANGO_ENV") == "production"
+        else "Carpool_Sytem.settings.dev"
+    ),
+)
 
 app = Celery("Carpool_Sytem")
 
