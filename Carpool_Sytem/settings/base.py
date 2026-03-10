@@ -17,10 +17,8 @@ from datetime import timedelta
 
 load_dotenv()
 
+print("✅ Loaded Django settings module:", os.environ.get("DJANGO_SETTINGS_MODULE"))
 
-import mimetypes
-
-mimetypes.add_type("application/javascript", ".js")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -47,13 +45,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "accounts",
-    "rides",
-    "ride_alerts",
-    "ride_requests",
-    "passengers",
-    "reservations",
-    "utils",
     "drf_yasg",
     "rest_framework_simplejwt.token_blacklist",
     "rest_framework",
@@ -61,6 +52,17 @@ INSTALLED_APPS = [
     "django_celery_results",
     "debug_toolbar",
 ]
+
+PROJECT_APPS = [
+    "accounts",
+    "rides",
+    "ride_alerts",
+    "ride_requests",
+    "passengers",
+    "reservations",
+]
+
+INSTALLED_APPS += PROJECT_APPS
 
 MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",  # Debug toolbar
@@ -74,7 +76,6 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
-    # "NON_FIELD_ERRORS_KEY":"errors",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
@@ -82,7 +83,6 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.AllowAny",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 10,
 }
 
 SIMPLE_JWT = {
@@ -136,28 +136,6 @@ TEMPLATES = [
 WSGI_APPLICATION = "Carpool_Sytem.wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-if DEBUG:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("LOCAL_DB_NAME"),
-            "USER": os.environ.get("LOCAL_DB_USER"),
-            "PASSWORD": os.environ.get("LOCAL_DB_PASSWORD"),
-            "HOST": os.environ.get("LOCAL_DB_HOST"),
-            "PORT": os.environ.get("LOCAL_DB_PORT"),
-        }
-    }
-
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -167,69 +145,6 @@ CACHES = {
         },
     }
 }
-
-
-if not DEBUG:
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "filters": {
-            "require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}
-        },
-        "formatters": {
-            "verbose": {
-                "format": "{levelname} {asctime:s} {name} {module}.py (line {lineno:d}) {funcName} {message}",
-                "style": "{",
-            },
-            "simple": {
-                "format": "{levelname} {asctime:s} {name} {message}",
-                "style": "{",
-            },
-        },
-        "handlers": {
-            "console": {
-                "level": "DEBUG",
-                "class": "logging.StreamHandler",
-                "formatter": "verbose",
-            },
-            "file": {
-                "level": "INFO",
-                "class": "logging.FileHandler",
-                "filename": BASE_DIR / "django_api.log",
-                "formatter": "verbose",
-            },
-            "error_file": {
-                "level": "INFO",
-                "class": "logging.FileHandler",
-                "filename": BASE_DIR / "django_api.log",
-                "formatter": "verbose",
-            },
-            "mail_admins": {
-                "level": "ERROR",
-                "filters": ["require_debug_false"],
-                "class": "django.utils.log.AdminEmailHandler",
-                "include_html": True,
-                "formatter": "verbose",
-            },
-        },
-        "loggers": {
-            "": {
-                "handlers": ["console", "error_file", "mail_admins"],
-                "level": "ERROR",
-                "propagate": False,
-            },
-            "django": {
-                "level": "INFO",
-                "handlers": ["console", "file"],
-                "propagate": True,
-            },
-            "background": {
-                "handlers": ["file", "mail_admins"],
-                "level": "ERROR",
-                "propagate": False,
-            },
-        },
-    }
 
 
 # Password validation
@@ -299,21 +214,18 @@ INTERNAL_IPS = [
 
 FRONTEND_URL = os.environ.get("FRONTEND_URL")
 
-# Celery Configuration Options
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
-
-# Celery Configuration
-CELERY_BROKER_URL = os.environ.get("REDIS_INSTANCE_URL_2")
-CELERY_ACCEPT_CONTENT = ["application/json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_TIMEZONE = "Africa/Douala"  # Set your desired timezone
-
-# Celery Beat Configuration (for periodic tasks)
-CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
-
-# CELERY RESULTS SETTINGS
-CELERY_RESULT_BACKEND = "django-db"  # To store task results in the Django database
-CELERY_RESULT_SERIALIZER = "json"
-
+accept_content = ["application/json"]
+task_serializer = "json"
+result_serializer = "json"
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+# Celery backend results
+result_backend = "django-db"
 broker_connection_retry_on_startup = True
+
+
+from Carpool_Sytem.logging import LOGGING
+import logging.config
+
+logging.config.dictConfig(LOGGING)

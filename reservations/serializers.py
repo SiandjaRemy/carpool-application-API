@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from accounts.serializers import SimpleUserSerializer
-from reservations.models import Reservations
+from reservations.models import Reservation
 from rides.models import Ride
 
 User = get_user_model()
@@ -40,7 +40,7 @@ class MakeReservationModelSerializer(serializers.Serializer):
             )
         try:
             with transaction.atomic():
-                reservation = Reservations.objects.create(**validated_data)
+                reservation = Reservation.objects.create(**validated_data)
                 ride.available_seats -= reservation.number_of_seats
                 if ride.available_seats == 0:
                     ride.is_full = True
@@ -56,7 +56,7 @@ class ReservationsModelSerializer(serializers.ModelSerializer):
     ride_id = serializers.UUIDField(write_only=True, required=True)
 
     class Meta:
-        model = Reservations
+        model = Reservation
         fields = [
             "id",
             "user",
@@ -105,7 +105,7 @@ class ReservationsModelSerializer(serializers.ModelSerializer):
 
         try:
             with transaction.atomic():
-                reservation = Reservations.objects.create(**validated_data)
+                reservation = Reservation.objects.create(**validated_data)
                 ride.available_seats -= reservation.number_of_seats
                 if ride.available_seats == 0:
                     ride.is_full = True

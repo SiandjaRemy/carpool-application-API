@@ -8,7 +8,7 @@ from core.models import TimeStampedModel
 User = get_user_model()
 
 
-class Reservations(TimeStampedModel):
+class Reservation(TimeStampedModel):
     id = models.UUIDField(
         default=uuid.uuid4, editable=False, primary_key=True, unique=True
     )

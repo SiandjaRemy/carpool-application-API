@@ -6,7 +6,9 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Carpool_Sytem.settings")
+
+    # Use development settings if no environment variable is set
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Carpool_Sytem.settings.production")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
