@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "ride_alerts",
     "ride_requests",
     "passengers",
+    "reservations",
     "utils",
     "drf_yasg",
     "rest_framework_simplejwt.token_blacklist",

@@ -3,17 +3,9 @@ from django.contrib.auth import get_user_model
 import uuid
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-from utils.validators import validate_number_of_seats_greater_then_zero
+from core.models import TimeStampedModel
 
 User = get_user_model()
-
-
-class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        abstract = True
 
 
 class Ride(TimeStampedModel):
@@ -24,14 +16,16 @@ class Ride(TimeStampedModel):
     departure_town = models.CharField(max_length=100)
     arrival_town = models.CharField(max_length=100)
     departure_datetime = models.DateTimeField()
-    available_seats = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10),])
+    available_seats = models.PositiveSmallIntegerField(
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(10),
+        ]
+    )
     price_per_seat = models.FloatField()
     is_active = models.BooleanField(default=True)
     is_full = models.BooleanField(default=False)
-    
-    
+
     def __str__(self):
         date_time = self.departure_datetime.strftime("%Y-%m-%d - %H:%M:%S")
         return f"{self.user} will ride from {self.departure_town} to {self.arrival_town} on {date_time}"
-    
-
