@@ -1,6 +1,9 @@
 from .base import *
 import os
 
+
+SECRET_KEY = os.environ.get("SECRET_KEY")
+
 # Overide just to be sure
 DEBUG = False
 
@@ -14,6 +17,10 @@ else:
     raise ValueError("ALLOWED_HOSTS environment variable is required in production")
 
 CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS]
+
+
+SIMPLE_JWT["SIGNING_KEY"] = SECRET_KEY
+
 
 # Database (Render)
 DATABASES = {

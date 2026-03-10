@@ -5,6 +5,8 @@ import mimetypes
 
 mimetypes.add_type("application/javascript", ".js")
 
+SECRET_KEY = "django-insecure-2@6qm0mn7=k&y-s7d=^$625*$(3)hx^)73i_ee4r*f2194)3#v"
+
 # Overide just to be sure
 DEBUG = True
 
@@ -19,6 +21,8 @@ DATABASES = {
     }
 }
 
+INSTALLED_APPS += ["debug_toolbar"]
+MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")  # Debug toolbar
 
 # Local Cache / Redis
 REDIS_URL = os.environ.get("LOCAL_REDIS_INSTANCE_URL")

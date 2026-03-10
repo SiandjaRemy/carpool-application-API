@@ -23,7 +23,7 @@ class ReservationsModelSerializer(serializers.ModelSerializer):
             "user",
             "ride",
             "ride_id",
-            "number_of_seats",
+            "seats_requested",
             "created_at",
             "modified_at",
         ]
@@ -34,7 +34,7 @@ class ReservationsModelSerializer(serializers.ModelSerializer):
         user = self.context["user"]
 
         ride_id = attrs.get("ride_id")
-        number_of_seats = attrs.get("number_of_seats")
+        seats_requested = attrs.get("seats_requested")
 
         ride = Ride().objects.select_related("user").filter(id=ride_id).first()
         if ride is None:
@@ -47,7 +47,7 @@ class ReservationsModelSerializer(serializers.ModelSerializer):
                 {"message": "You cant reserve a seat for a ride you created"}
             )
 
-        if number_of_seats > ride.available_seats:
+        if seats_requested > ride.available_seats:
             raise serializers.ValidationError(
                 {
                     "message": f"Only {ride.available_seats} seats are available for this ride"
@@ -67,7 +67,7 @@ class ReservationsModelSerializer(serializers.ModelSerializer):
         try:
             with transaction.atomic():
                 reservation = Reservation.objects.create(**validated_data)
-                ride.available_seats -= reservation.number_of_seats
+                ride.available_seats -= reservation.seats_requested
                 if ride.available_seats == 0:
                     ride.is_full = True
                 ride.save()

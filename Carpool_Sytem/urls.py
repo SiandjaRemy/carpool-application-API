@@ -36,8 +36,13 @@ urlpatterns = [
     re_path(
         r"^redoc/$", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"
     ),
-    path("__debug__/", include("debug_toolbar.urls")),
     path("admin/", admin.site.urls),
     path("auth/", include("accounts.urls")),
-    path("carpool/", include("carpool.urls")),
+    path("/", include("carpool.urls")),
 ]
+
+# ONLY include debug toolbar urls if it's actually in INSTALLED_APPS
+if "debug_toolbar" in settings.INSTALLED_APPS:
+    urlpatterns += [
+        path("__debug__/", include("debug_toolbar.urls")),
+    ]

@@ -16,7 +16,7 @@ from carpool.serializers.request_serializers import RideRequestModelSerializer
 
 
 class RideRequestModelViewset(viewsets.ModelViewSet):
-    http_method_names = ["get", "post", "patch", "delete"]
+    http_method_names = ["get", "post", "patch"]
     serializer_class = RideRequestModelSerializer
     pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthenticatedOrReadOnly, IsCreatorOrReadOnly]

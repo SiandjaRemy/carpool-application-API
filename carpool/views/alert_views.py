@@ -13,8 +13,12 @@ from carpool.serializers.alert_serializers import RideAlertModelSerializer
 from carpool.serializers.base_serializers import BlankSerializer
 
 
+from drf_yasg.utils import swagger_auto_schema
+
+
+@swagger_auto_schema(tags=["Ride Alerts"])
 class RideAlertModelViewset(viewsets.ModelViewSet):
-    http_method_names = ["get", "post", "patch", "delete"]
+    http_method_names = ["get", "post", "patch"]
     serializer_class = RideAlertModelSerializer
     pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthenticated, IsCreator]

@@ -14,7 +14,11 @@ router.register(
 )
 
 
-ride_router = routers.NestedDefaultRouter(router, "rides", lookup="rides")
+ride_router = routers.NestedDefaultRouter(
+    router,
+    "rides",
+    lookup="rides",
+)
 ride_router.register(
     "requests", request_views.RideRequestModelViewset, basename="requests"
 )
