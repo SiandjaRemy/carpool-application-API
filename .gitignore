@@ -1,15 +1,50 @@
-
-
-.env
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
 env/
 venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
 
-__pycache__/
+# Pytest
+.pytest_cache/
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
 
-db.sqlite3
-
+# Django
 *.log
-
-.venv
-
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static/
+*.pot
 logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project specific
+.env
+.env.local
+.env.*.local
