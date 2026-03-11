@@ -19,6 +19,7 @@ else:
 CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS]
 
 
+SIMPLE_JWT = SIMPLE_JWT.copy()
 SIMPLE_JWT["SIGNING_KEY"] = SECRET_KEY
 
 

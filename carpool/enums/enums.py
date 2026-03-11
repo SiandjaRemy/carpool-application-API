@@ -10,7 +10,7 @@ class RequestStatus(models.TextChoices):
 
 class ReservationPaymentStatus(models.TextChoices):
     PENDING = "pending", "Pending"
-    PAID = "paid", "Paid"
+    CONFIRMED = "confirmed", "Confirmed"
     REFUNDED = "refunded", "Refunded"
     FAILED = "failed", "Failed"
 

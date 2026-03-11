@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError
 
 from django.utils import timezone
 
+from carpool.enums.enums import RideStatus
 from carpool.paginators import CustomPageNumberPagination
 from carpool.permissions import IsCreator, IsCreatorOrReadOnly
 
@@ -26,7 +27,7 @@ class RideModelViewset(viewsets.ModelViewSet):
         queryset = (
             Ride.objects.select_related("user")
             .filter(
-                is_active=True,
+                status=RideStatus.SHECDULED,
                 departure_datetime__gte=current_time,
                 available_seats__gt=0,
             )

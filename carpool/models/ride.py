@@ -31,6 +31,10 @@ class Ride(TimeStampedModel):
     )
     fully_reserved = models.BooleanField(default=False)
 
+    @property
+    def seats_available(self):
+        return self.available_seats == 0 or self.fully_reserved
+
     def __str__(self):
         date_time = self.departure_datetime.strftime("%Y-%m-%d - %H:%M:%S")
         return f"{self.user} will ride from {self.departure_town} to {self.arrival_town} on {date_time}"

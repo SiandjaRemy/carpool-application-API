@@ -38,7 +38,7 @@ urlpatterns = [
     ),
     path("admin/", admin.site.urls),
     path("auth/", include("accounts.urls")),
-    path("/", include("carpool.urls")),
+    path("api/", include("carpool.urls")),
 ]
 
 # ONLY include debug toolbar urls if it's actually in INSTALLED_APPS
