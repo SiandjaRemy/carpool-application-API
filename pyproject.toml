@@ -17,6 +17,7 @@ dependencies = [
     "drf-yasg>=1.21.15",
     "factory-boy>=3.3.3",
     "psycopg2-binary>=2.9.11",
+    "pytest-cov>=7.0.0",
     "pytest-django>=4.12.0",
     "python-dotenv>=1.2.2",
 ]
