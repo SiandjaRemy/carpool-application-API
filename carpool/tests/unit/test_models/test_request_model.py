@@ -3,13 +3,9 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from carpool.enums.enums import RequestStatus
-
 from carpool.models import RideRequest
-from tests.factories import (
-    RideFactory,
-    RideRequestFactory,
-    UserFactory,
-)
+from carpool.tests.factories import RideFactory, RideRequestFactory, UserFactory
+
 
 pytestmark = pytest.mark.unit
 
@@ -50,23 +46,23 @@ class TestRideRequestModel:
 
         # Test minimum seats
         with pytest.raises(ValidationError):
-            ride = RideRequest(
+            ride_request = RideRequest(
                 ride=ride,
                 passenger=passenger,
                 seats_requested=0,  # Invalid
                 price_per_seat=25.50,
             )
-            ride.full_clean()
+            ride_request.full_clean()
 
         # Test maximum seats
         with pytest.raises(ValidationError):
-            ride = RideRequest(
+            ride_request = RideRequest(
                 ride=ride,
                 passenger=passenger,
                 seats_requested=11,  # Invalid
                 price_per_seat=25.50,
             )
-            ride.full_clean()
+            ride_request.full_clean()
 
     def test_price_per_seat_positive(self, db):
         """Test price_per_seat must be positive"""
@@ -74,10 +70,10 @@ class TestRideRequestModel:
         passenger = UserFactory()
 
         with pytest.raises(ValidationError):
-            ride = RideRequest(
+            ride_request = RideRequest(
                 ride=ride,
                 passenger=passenger,
                 seats_requested=2,
                 price_per_seat=-10.0,  # Invalid
             )
-            ride.full_clean()
+            ride_request.full_clean()

@@ -25,7 +25,11 @@ class Ride(TimeStampedModel):
             MaxValueValidator(10),
         ]
     )
-    price_per_seat = models.DecimalField(max_digits=10, decimal_places=2)
+    price_per_seat = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(1)],
+    )
     status = models.CharField(
         max_length=20, choices=RideStatus.choices, default=RideStatus.SHECDULED
     )
@@ -33,7 +37,7 @@ class Ride(TimeStampedModel):
 
     @property
     def seats_available(self):
-        return self.available_seats == 0 or self.fully_reserved
+        return not self.fully_reserved
 
     def __str__(self):
         date_time = self.departure_datetime.strftime("%Y-%m-%d - %H:%M:%S")

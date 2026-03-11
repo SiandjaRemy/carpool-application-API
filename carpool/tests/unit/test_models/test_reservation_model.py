@@ -4,8 +4,7 @@ from django.core.exceptions import ValidationError
 
 from carpool.models import Reservation
 from carpool.enums.enums import ReservationPaymentStatus
-
-from tests.factories import (
+from carpool.tests.factories import (
     ReservationFactory,
     ConfirmedReservationFactory,
     RideFactory,

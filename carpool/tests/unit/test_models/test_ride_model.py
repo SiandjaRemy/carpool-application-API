@@ -1,12 +1,12 @@
 import pytest
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from carpool.enums.enums import RideStatus
-
 from carpool.models import Ride
-from tests.factories import (
+from carpool.tests.factories import (
     FullyReservedRideFactory,
     RideFactory,
     UserFactory,
@@ -15,7 +15,7 @@ from tests.factories import (
 pytestmark = pytest.mark.unit
 
 
-departure_datetime = datetime.now() + timedelta(days=1)
+departure_datetime = timezone.now() + timedelta(days=1)
 
 
 class TestRideModel:
@@ -42,9 +42,9 @@ class TestRideModel:
         ride = RideFactory()
 
         assert ride.id is not None
-        assert ride.payment_status == RideStatus.SHECDULED
-        assert ride.seats_requested >= 1
-        assert ride.seats_requested <= 10
+        assert ride.status == RideStatus.SHECDULED
+        assert ride.available_seats >= 1
+        assert ride.available_seats <= 10
         assert ride.price_per_seat == 25.50
 
     def test_seats_available_property(self, db):

@@ -8,13 +8,13 @@ from celery.schedules import crontab
 os.environ.setdefault(
     "DJANGO_SETTINGS_MODULE",
     (
-        "Carpool_Sytem.settings.prod"
+        "Carpool_System.settings.prod"
         if os.environ.get("DJANGO_ENV") == "production"
-        else "Carpool_Sytem.settings.dev"
+        else "Carpool_System.settings.dev"
     ),
 )
 
-app = Celery("Carpool_Sytem")
+app = Celery("Carpool_System")
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.

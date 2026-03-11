@@ -1,9 +1,14 @@
 import factory
 from factory.django import DjangoModelFactory
+
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+from datetime import timedelta
+
 from carpool.enums.enums import RequestStatus, ReservationPaymentStatus, RideStatus
 from carpool.models import Ride, RideRequest, RideAlert, Reservation
-from datetime import datetime, timedelta
+
 
 User = get_user_model()
 
@@ -11,6 +16,7 @@ User = get_user_model()
 class UserFactory(DjangoModelFactory):
     class Meta:
         model = User
+        skip_postgeneration_save = True
 
     username = factory.Sequence(lambda n: f"user{n}")
     email = factory.LazyAttribute(lambda obj: f"{obj.username}@example.com")
@@ -26,12 +32,13 @@ class UserFactory(DjangoModelFactory):
 class RideFactory(DjangoModelFactory):
     class Meta:
         model = Ride
+        skip_postgeneration_save = True
 
     user = factory.SubFactory(UserFactory)
     departure_town = factory.Faker("city")
     arrival_town = factory.Faker("city")
     departure_datetime = factory.LazyFunction(
-        lambda: datetime.now() + timedelta(days=1)
+        lambda: timezone.now() + timedelta(days=1)
     )
     available_seats = 10
     price_per_seat = 25.50
@@ -51,6 +58,7 @@ class FullyReservedRideFactory(RideFactory):
 class RideRequestFactory(DjangoModelFactory):
     class Meta:
         model = RideRequest
+        skip_postgeneration_save = True
 
     ride = factory.SubFactory(RideFactory)
     passenger = factory.SubFactory(UserFactory)
@@ -65,6 +73,7 @@ class RideRequestFactory(DjangoModelFactory):
 class ReservationFactory(DjangoModelFactory):
     class Meta:
         model = Reservation
+        skip_postgeneration_save = True
 
     ride = factory.SubFactory(RideFactory)
     passenger = factory.SubFactory(UserFactory)
@@ -87,7 +96,7 @@ class ConfirmedReservationFactory(ReservationFactory):
     """Factory for confirmed reservations"""
 
     payment_status = ReservationPaymentStatus.CONFIRMED
-    confirmed_at = factory.LazyFunction(lambda: datetime.now())
+    confirmed_at = factory.LazyFunction(lambda: timezone.now())
 
 
 class FailedReservationFactory(ReservationFactory):
@@ -103,10 +112,11 @@ class FailedReservationFactory(ReservationFactory):
 class RideAlertFactory(DjangoModelFactory):
     class Meta:
         model = RideAlert
+        skip_postgeneration_save = True
 
     user = factory.SubFactory(UserFactory)
     origin = factory.Faker("city")
     destination = factory.Faker("city")
-    date_from = factory.LazyFunction(lambda: datetime.now().date())
-    date_to = factory.LazyFunction(lambda: datetime.now().date() + timedelta(days=7))
+    date_from = factory.LazyFunction(lambda: timezone.now().date())
+    date_to = factory.LazyFunction(lambda: timezone.now().date() + timedelta(days=7))
     is_active = True

@@ -21,6 +21,13 @@ schema_view = get_schema_view(
     permission_classes=[permissions.AllowAny],
 )
 
+
+api_patterns = [
+    path("auth/", include(("accounts.urls", "accounts"), namespace="accounts")),
+    path("carpool/", include(("carpool.urls", "carpool"), namespace="carpool")),
+]
+
+
 urlpatterns = [
     # swagger
     re_path(
@@ -37,8 +44,8 @@ urlpatterns = [
         r"^redoc/$", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"
     ),
     path("admin/", admin.site.urls),
-    path("auth/", include("accounts.urls")),
-    path("api/", include("carpool.urls")),
+    path("api/", include((api_patterns))),
+    # path("api/", include(api_patterns)),
 ]
 
 # ONLY include debug toolbar urls if it's actually in INSTALLED_APPS

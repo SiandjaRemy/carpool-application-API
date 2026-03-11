@@ -8,7 +8,7 @@ def main():
     """Run administrative tasks."""
 
     # Use development settings if no environment variable is set
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Carpool_Sytem.settings.dev")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Carpool_System.settings.dev")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

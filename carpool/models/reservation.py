@@ -29,7 +29,12 @@ class Reservation(TimeStampedModel):
     seats_requested = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)]
     )
-    price_per_seat = models.FloatField()
+    price_per_seat = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(1)],
+    )
+
     confirmed_at = models.DateTimeField(null=True, blank=True)
 
     @property
