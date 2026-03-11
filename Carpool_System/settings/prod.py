@@ -1,5 +1,6 @@
 from .base import *
 import os
+import dj_database_url
 
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -24,15 +25,16 @@ SIMPLE_JWT["SIGNING_KEY"] = SECRET_KEY
 
 
 # Database (Render)
+DATABASE_URL = os.getenv("DATABASE_SERVICE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL must be set in production")
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("DB_USER"),
-        "PASSWORD": os.environ.get("DB_PASSWORD"),
-        "HOST": os.environ.get("DB_HOST"),
-        "PORT": os.environ.get("DB_PORT"),
-    }
+    "default": dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=60,
+        ssl_require=True,
+    )
 }
 
 # Local Cache / Redis
