@@ -5,6 +5,7 @@ from django.db import transaction
 
 from accounts.serializers import SimpleUserSerializer
 
+from carpool.enums.enums import RideStatus
 from carpool.models.reservation import Reservation
 from carpool.models.ride import Ride
 
@@ -36,7 +37,11 @@ class ReservationsModelSerializer(serializers.ModelSerializer):
         ride_id = attrs.get("ride_id")
         seats_requested = attrs.get("seats_requested")
 
-        ride = Ride().objects.select_related("user").filter(id=ride_id).first()
+        ride = (
+            Ride.objects.select_related("user")
+            .filter(id=ride_id, status=RideStatus.SHECDULED, fully_reserved=False)
+            .first()
+        )
         if ride is None:
             raise serializers.ValidationError(
                 {"message": "Corresponding ride not found"}

@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 
@@ -12,20 +12,24 @@ from carpool.permissions import IsCreator, IsCreatorOrReadOnly
 from carpool.models.request import RideRequest
 
 from carpool.serializers.base_serializers import BlankSerializer
-from carpool.serializers.request_serializers import RideRequestModelSerializer
+from carpool.serializers.request_serializers import (
+    RideRequestModelSerializer,
+    RideRequestUpdateModelSerializer,
+)
 
 
 class RideRequestModelViewset(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "patch"]
     serializer_class = RideRequestModelSerializer
     pagination_class = CustomPageNumberPagination
-    permission_classes = [IsAuthenticatedOrReadOnly, IsCreatorOrReadOnly]
+    permission_classes = [IsAuthenticated, IsCreatorOrReadOnly]
 
     def get_queryset(self):
         today = timezone.now()
+        user = self.request.user
         queryset = (
             RideRequest.objects.select_related("user")
-            .filter(is_active=True, departure_datetime__gte=today)
+            .filter(is_active=True, departure_datetime__gte=today, passenger=user)
             .order_by("-created_at")
         )
         return queryset
@@ -40,9 +44,10 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
         return context
 
     def get_serializer_class(self):
-        if self.request.method == "POST":
-            return RideRequestModelSerializer
-        elif self.request.method == "GET":
+        """Return different serializers based on action"""
+        if self.action in ["update", "partial_update"]:
+            return RideRequestUpdateModelSerializer
+        elif self.action in ["create", "retrieve", "list"]:
             return RideRequestModelSerializer
         return BlankSerializer
 

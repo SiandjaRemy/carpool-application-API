@@ -13,12 +13,14 @@ from carpool.permissions import IsCreator, IsCreatorOrReadOnly
 from carpool.models.ride import Ride
 
 from carpool.serializers.base_serializers import BlankSerializer
-from carpool.serializers.ride_serializers import RideModelSerializer
+from carpool.serializers.ride_serializers import (
+    RideModelSerializer,
+    RideUpdateSerializer,
+)
 
 
 class RideModelViewset(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "patch"]
-    serializer_class = RideModelSerializer
     pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthenticatedOrReadOnly, IsCreatorOrReadOnly]
 
@@ -36,6 +38,7 @@ class RideModelViewset(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_context(self):
+        """Add user to serializer context for create operations"""
         user = self.request.user
         context = {}
         if user.is_authenticated:
@@ -45,9 +48,10 @@ class RideModelViewset(viewsets.ModelViewSet):
         return context
 
     def get_serializer_class(self):
-        if self.request.method == "POST":
-            return RideModelSerializer
-        elif self.request.method == "GET":
+        """Return different serializers based on action"""
+        if self.action in ["update", "partial_update"]:
+            return RideUpdateSerializer
+        elif self.action in ["create", "retrieve", "list"]:
             return RideModelSerializer
         return BlankSerializer
 
