@@ -6,6 +6,7 @@ class RequestStatus(models.TextChoices):
     ACCEPTED = "accepted", "Accepted"
     REJECTED = "rejected", "Rejected"
     CANCELLED = "cancelled", "Cancelled"
+    DRIVER_CANCELLED = "cancelled_by_driver", "Cancelled by the driver"
 
 
 class ReservationPaymentStatus(models.TextChoices):

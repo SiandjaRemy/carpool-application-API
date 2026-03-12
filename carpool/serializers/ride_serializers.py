@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from accounts.serializers import SimpleUserSerializer
 from carpool.models.ride import Ride
+from carpool.services.ride_service import RideService
 
 User = get_user_model()
 
@@ -42,13 +43,9 @@ class RideModelSerializer(serializers.ModelSerializer):
         user = self.context["user"]
         validated_data["user"] = user
 
-        try:
-            with transaction.atomic():
-                new_ride = Ride.objects.create(**validated_data)
-                # alert_users_for_ride.delay(new_ride.id)
-                return new_ride
-        except Exception as e:
-            raise serializers.ValidationError(str(e))
+        new_ride = RideService.create_ride(ride_data=validated_data, user=user)
+
+        return new_ride
 
 
 class RideUpdateSerializer(serializers.ModelSerializer):
@@ -76,29 +73,15 @@ class RideUpdateSerializer(serializers.ModelSerializer):
             "fully_reserved",
         ]
 
-    def validate_departure_datetime(self, value):
-        """Ensure departure time is in the future"""
-        if value <= timezone.now():
-            raise serializers.ValidationError(
-                {"detail": "Departure time must be in the future"}
-            )
-        return value
+    def update(self, instance, validated_data):
+        user = self.context["user"]
+        validated_data["user"] = user
 
-    def validate_available_seats(self, value):
-        """Ensure seats are positive"""
-        if value < 0:
-            raise serializers.ValidationError(
-                {"detail": "Available seats cannot be negative"}
-            )
-        return value
+        updated_ride = RideService.update_ride(
+            update_data=validated_data, instance=instance, user=user
+        )
 
-    def validate_price_per_seat(self, value):
-        """Ensure price is positive"""
-        if value < 0:
-            raise serializers.ValidationError(
-                {"detail": "Price per seat must be positive"}
-            )
-        return value
+        return updated_ride
 
 
 class SimpleRideModelSerializer(serializers.ModelSerializer):

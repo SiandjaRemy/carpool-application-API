@@ -140,14 +140,13 @@ class RideRequestUpdateModelSerializer(serializers.ModelSerializer):
 
 
 class AcceptRideRequestSerializer(serializers.Serializer):
-    def validate(self, attrs):
-        # Only request/ride existence validation
-        # No business rules here!
-        return attrs
 
     def save(self, **kwargs):
+        request_id = self.context["request_id"]
+        user = self.context["user"]
+
         ride_request = RideRequestService.accept_request(
-            request_id=self.context["request_id"], user=self.context["user"]
+            request_id=request_id, user=user
         )
 
         return {
@@ -158,14 +157,12 @@ class AcceptRideRequestSerializer(serializers.Serializer):
 
 class RejectRideRequestSerializer(serializers.Serializer):
 
-    def validate(self, attrs):
-        # Only request/ride existence validation
-        # No business rules here!
-        return attrs
-
     def save(self, **kwargs):
+        request_id = self.context["request_id"]
+        user = self.context["user"]
+
         ride_request = RideRequestService.reject_request(
-            request_id=self.context["request_id"], user=self.context["user"]
+            request_id=request_id, user=user
         )
 
         return {
@@ -176,14 +173,12 @@ class RejectRideRequestSerializer(serializers.Serializer):
 
 class CancelRideRequestSerializer(serializers.Serializer):
 
-    def validate(self, attrs):
-        # Only request/ride existence validation
-        # No business rules here!
-        return attrs
-
     def save(self, **kwargs):
+        request_id = self.context["request_id"]
+        user = self.context["user"]
+
         ride_request = RideRequestService.cancel_request(
-            request_id=self.context["request_id"], user=self.context["user"]
+            request_id=request_id, user=user
         )
 
         return {

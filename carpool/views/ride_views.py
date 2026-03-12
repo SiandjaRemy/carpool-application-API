@@ -2,13 +2,12 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 
 from django.utils import timezone
 
 from carpool.enums.enums import RideStatus
 from carpool.paginators import CustomPageNumberPagination
-from carpool.permissions import IsCreator, IsCreatorOrReadOnly
+from carpool.permissions import IsCreatorOrReadOnly
 
 from carpool.models.ride import Ride
 
@@ -41,9 +40,11 @@ class RideModelViewset(viewsets.ModelViewSet):
         """Add user to serializer context for create operations"""
         user = self.request.user
         context = {}
+        ride_id = self.kwargs.get("pk")
         if user.is_authenticated:
             context = {
                 "user": user,
+                "ride_id": ride_id,
             }
         return context
 
@@ -78,26 +79,3 @@ class RideModelViewset(viewsets.ModelViewSet):
 
         my_rides = RideModelSerializer(rides, many=True)
         return Response(my_rides.data, status=status.HTTP_200_OK)
-
-    @action(
-        methods=["PATCH"],
-        detail=True,
-        url_path="toggle-active",
-        permission_classes=[IsAuthenticated, IsCreator],
-    )
-    def toggle_active(self, request, pk=None):
-        if not pk:
-            raise ValidationError({"error": "pk is required"})
-        user = self.request.user
-        try:
-            ride = Ride.objects.get(id=pk, user=user)
-            ride.is_active = not ride.is_active
-            ride.save()
-            ride_status = "Active" if ride.is_active else "Inactive"
-            data = {"message": f"Ride is now {ride_status}"}
-            return Response(data, status=status.HTTP_200_OK)
-
-        except Ride.DoesNotExist:
-            raise ValidationError({"message": "No corresponding ride found"})
-        except Exception as e:
-            raise ValidationError({"error": str(e)})
