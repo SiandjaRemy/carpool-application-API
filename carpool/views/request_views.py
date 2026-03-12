@@ -146,11 +146,16 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
                 status=status.HTTP_200_OK,
             )
 
-        except serializers.ValidationError as e:
+        except ValueError as e:
+            # Handle validation errors (400)
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except PermissionError as e:
+            # Handle permission errors (403)
+            return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
         except Exception as e:
+            # Handle unexpected errors (500)
             return Response(
-                {"detail": f"An unexpected error occurred. {str(e)}."},
+                {"detail": f"An unexpected error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -188,11 +193,16 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
                 status=status.HTTP_200_OK,
             )
 
-        except serializers.ValidationError as e:
+        except ValueError as e:
+            # Handle validation errors (400)
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except PermissionError as e:
+            # Handle permission errors (403)
+            return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
         except Exception as e:
+            # Handle unexpected errors (500)
             return Response(
-                {"detail": f"An unexpected error occurred. {str(e)}."},
+                {"detail": f"An unexpected error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -230,10 +240,15 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
                 status=status.HTTP_200_OK,
             )
 
-        except serializers.ValidationError as e:
+        except ValueError as e:
+            # Handle validation errors (400)
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except PermissionError as e:
+            # Handle permission errors (403)
+            return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
         except Exception as e:
+            # Handle unexpected errors (500)
             return Response(
-                {"detail": f"An unexpected error occurred. {str(e)}."},
+                {"detail": f"An unexpected error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

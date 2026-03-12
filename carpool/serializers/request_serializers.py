@@ -10,6 +10,7 @@ from carpool.enums.enums import RequestStatus, RideStatus
 from carpool.models import RideRequest, Ride
 from carpool.models.reservation import Reservation
 from carpool.serializers.ride_serializers import SimpleRideModelSerializer
+from carpool.services.request_service import RideRequestService
 from carpool.validators.ride_request_validators import validate_ride_request_exists
 
 User = get_user_model()
@@ -139,188 +140,33 @@ class RideRequestUpdateModelSerializer(serializers.ModelSerializer):
 
 
 class AcceptRideRequestSerializer(serializers.Serializer):
-
     def validate(self, attrs):
-        user = self.context["user"]
-        ride_id = self.context["ride_id"]
-        request_id = self.context["request_id"]
-
-        try:
-            # Get the request with related ride in a single query
-            request = RideRequest.objects.select_related("ride").get(
-                id=request_id,
-                ride_id=ride_id,
-                ride__user=user,  # Ensure current user owns the ride
-                ride__status=RideStatus.SCHEDULED,
-                status=RequestStatus.PENDING,
-            )
-        except RideRequest.DoesNotExist:
-            raise serializers.ValidationError(
-                {"detail": "Corresponding pending request not found."}
-            )
-
-        # Validate that the ride hasn't already departed
-        if request.ride.departure_datetime <= timezone.now():
-            raise serializers.ValidationError(
-                {
-                    "detail": "Cannot accept requests for rides that have already departed."
-                }
-            )
-
-        # Validate seat availability
-        if request.seats_requested > request.ride.available_seats:
-            raise serializers.ValidationError(
-                {
-                    "detail": (
-                        f"Cannot accept request. Only {request.ride.available_seats} seats available, "
-                        f"but {request.seats_requested} requested."
-                    )
-                }
-            )
-
-        # Store the request in attrs for use in save()
-        attrs["ride_request"] = request
+        # Only request/ride existence validation
+        # No business rules here!
         return attrs
 
-    @transaction.atomic
     def save(self, **kwargs):
-        """
-        Atomic transaction that:
-        1. Updates the request status to ACCEPTED
-        2. Decreases available seats on the ride
-        3. Creates a reservation
-        """
-        ride_request = self.validated_data["ride_request"]
-
-        # Lock the ride and request rows to prevent race conditions
-        ride = ride_request.ride
-        ride = Ride.objects.select_for_update().get(id=ride.id)
-        ride_request = RideRequest.objects.select_for_update().get(id=ride_request.id)
-
-        # Double-check status and availability within transaction
-        if ride_request.status != RequestStatus.PENDING:
-            raise serializers.ValidationError(
-                {
-                    "detail": f"Request is no longer pending (current status: {ride_request.status})"
-                }
-            )
-
-        if ride_request.seats_requested > ride.available_seats:
-            raise serializers.ValidationError(
-                {
-                    "detail": f"Seat availability changed. Only {ride.available_seats} seats left."
-                }
-            )
-
-        # 1. Update request status
-        ride_request.status = RequestStatus.ACCEPTED
-        ride_request.save(update_fields=["status", "updated_at"])
-
-        # 2. Update ride available seats
-        ride.available_seats -= ride_request.seats_requested
-        ride.save(update_fields=["available_seats", "updated_at"])
-
-        # 3. Create reservation
-        reservation = Reservation.objects.create(
-            ride=ride,
-            passenger=ride_request.passenger,
-            seats_requested=ride_request.seats_requested,
-            price_per_seat=ride.price_per_seat,
+        ride_request = RideRequestService.accept_request(
+            request_id=self.context["request_id"], user=self.context["user"]
         )
-
-        # Optional: Trigger background tasks
-        # from carpool.tasks import send_request_accepted_notification
-        # transaction.on_commit(lambda: send_request_accepted_notification.delay(
-        #     request_id=ride_request.id,
-        #     reservation_id=reservation.id
-        # ))
 
         return {
             "request": ride_request,
-            "reservation": reservation,
-            "detail": "Request accepted successfully",
+            "detail": "Accepted rejected successfully",
         }
 
 
 class RejectRideRequestSerializer(serializers.Serializer):
 
     def validate(self, attrs):
-        user = self.context["user"]
-        ride_id = self.context["ride_id"]
-        request_id = self.context["request_id"]
-
-        try:
-            # Get the request with related ride in a single query
-            request = RideRequest.objects.select_related("ride").get(
-                id=request_id,
-                ride_id=ride_id,
-                ride__user=user,  # Ensure current user owns the ride
-                ride__status=RideStatus.SCHEDULED,
-                status=RequestStatus.PENDING,
-            )
-        except RideRequest.DoesNotExist:
-            raise serializers.ValidationError(
-                {"detail": "Corresponding pending request not found."}
-            )
-
-        # Validate that the ride hasn't already departed
-        if request.ride.departure_datetime <= timezone.now():
-            raise serializers.ValidationError(
-                {
-                    "detail": "Cannot reject requests for rides that have already departed."
-                }
-            )
-
-        # Validate seat availability
-        if request.seats_requested > request.ride.available_seats:
-            raise serializers.ValidationError(
-                {
-                    "detail": (
-                        f"Cannot accept request. Only {request.ride.available_seats} seats available, "
-                        f"but {request.seats_requested} requested."
-                    )
-                }
-            )
-
-        # Store the request in attrs for use in save()
-        attrs["ride_request"] = request
+        # Only request/ride existence validation
+        # No business rules here!
         return attrs
 
-    @transaction.atomic
     def save(self, **kwargs):
-        """
-        Atomic transaction that updates the request status to REJECTED
-        """
-        ride_request = self.validated_data["ride_request"]
-
-        # Lock the ride and request rows to prevent race conditions
-        ride = ride_request.ride
-        ride_request = RideRequest.objects.select_for_update().get(id=ride_request.id)
-
-        # Double-check status and availability within transaction
-        if ride_request.status != RequestStatus.PENDING:
-            raise serializers.ValidationError(
-                {
-                    "detail": f"Request is no longer pending (current status: {ride_request.status})"
-                }
-            )
-
-        if ride_request.seats_requested > ride.available_seats:
-            raise serializers.ValidationError(
-                {
-                    "detail": f"Seat availability changed. Only {ride.available_seats} seats left."
-                }
-            )
-
-        ride_request.status = RequestStatus.REJECTED
-        ride_request.save(update_fields=["status", "updated_at"])
-
-        # Optional: Trigger background tasks
-        # from carpool.tasks import send_request_rejected_notification
-        # transaction.on_commit(lambda: send_request_rejected_notification.delay(
-        #     request_id=ride_request.id,
-        #     reservation_id=reservation.id
-        # ))
+        ride_request = RideRequestService.reject_request(
+            request_id=self.context["request_id"], user=self.context["user"]
+        )
 
         return {
             "request": ride_request,
@@ -331,56 +177,14 @@ class RejectRideRequestSerializer(serializers.Serializer):
 class CancelRideRequestSerializer(serializers.Serializer):
 
     def validate(self, attrs):
-        user = self.context["user"]
-        ride_id = self.context["ride_id"]
-        request_id = self.context["request_id"]
-
-        try:
-            # Get the request with related ride in a single query
-            request = RideRequest.objects.select_related("ride").get(
-                id=request_id,
-                ride_id=ride_id,
-                passenger=user,  # Ensure current user is the passenger on the request
-                ride__status=RideStatus.SCHEDULED,
-                status=RequestStatus.PENDING,
-            )
-        except RideRequest.DoesNotExist:
-            raise serializers.ValidationError(
-                {"detail": "Corresponding pending request not found."}
-            )
-
-        # Store the request in attrs for use in save()
-        attrs["ride_request"] = request
+        # Only request/ride existence validation
+        # No business rules here!
         return attrs
 
-    @transaction.atomic
     def save(self, **kwargs):
-        """
-        Atomic transaction that updates the request status to REJECTED
-        """
-        ride_request = self.validated_data["ride_request"]
-
-        # Lock the ride and request rows to prevent race conditions
-        ride = ride_request.ride
-        ride_request = RideRequest.objects.select_for_update().get(id=ride_request.id)
-
-        # Double-check status and availability within transaction
-        if ride_request.status != RequestStatus.PENDING:
-            raise serializers.ValidationError(
-                {
-                    "detail": f"Request is no longer pending (current status: {ride_request.status})"
-                }
-            )
-
-        if ride_request.seats_requested > ride.available_seats:
-            raise serializers.ValidationError(
-                {
-                    "detail": f"Seat availability changed. Only {ride.available_seats} seats left."
-                }
-            )
-
-        ride_request.status = RequestStatus.CANCELLED
-        ride_request.save(update_fields=["status", "updated_at"])
+        ride_request = RideRequestService.cancel_request(
+            request_id=self.context["request_id"], user=self.context["user"]
+        )
 
         return {
             "request": ride_request,

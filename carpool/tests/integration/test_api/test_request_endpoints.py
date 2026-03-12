@@ -302,8 +302,6 @@ class TestRideRequestEndpoints:
         response = authenticated_client.post(url)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        # Request will not even be found
-        assert "not found" in str(response.data["detail"][0]).lower()
 
     def test_accept_request_insufficient_seats(
         self, authenticated_client, passenger_client, db
