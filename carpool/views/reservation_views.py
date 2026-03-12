@@ -8,7 +8,7 @@ from carpool.serializers.reservation_serializers import ReservationsModelSeriali
 
 
 class ReservationModelViewet(viewsets.ModelViewSet):
-    http_method_names = ["get", "post", "patch"]
+    http_method_names = ["get", "patch"]
     pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = ReservationsModelSerializer

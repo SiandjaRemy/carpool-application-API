@@ -1,54 +1,33 @@
 import pytest
 import concurrent.futures
-from django.db import IntegrityError, transaction
 
-from carpool.models.ride import Ride
-from carpool.tests.factories import RideFactory, UserFactory
-
-
-# 1. Define the 'service' logic as a helper if it doesn't exist elsewhere
-def create_booking_logic(ride_id, user):
-    """
-    Simulates the atomic logic inside your serializer/view
-    """
-    try:
-        with transaction.atomic():
-            # select_for_update() is the 'lock' that prevents the race condition
-            ride = Ride.objects.select_for_update().get(id=ride_id)
-
-            if ride.available_seats < 1:
-                raise IntegrityError("No seats available")
-
-            # Simulate a small delay to increase the chance of a collision
-            # import time; time.sleep(0.1)
-
-            ride.available_seats -= 1
-            ride.save()
-            return True
-    except Exception as e:
-        raise e
+from carpool.services.request_service import RideRequestService
+from carpool.tests.factories import RideFactory, RideRequestFactory, UserFactory
 
 
 @pytest.mark.django_db(transaction=True)
 def test_concurrent_booking_race_condition():
-    """Test that two users can't book the last seat simultaneously"""
-    ride = RideFactory(available_seats=1)
-    user1 = UserFactory()
-    user2 = UserFactory()
+    """Test that the owner cannot accept two requests if only one seat remains"""
+    # 1. Setup: A ride with 1 seat and 2 pending requests
+    ride_owner = UserFactory()
+    ride = RideFactory(available_seats=1, user=ride_owner)
 
-    # We use a wrapper to handle the executor calls
-    def attempt_booking(user):
-        return create_booking_logic(ride.id, user)
+    req1 = RideRequestFactory(ride=ride, seats_requested=1)
+    req2 = RideRequestFactory(ride=ride, seats_requested=1)
 
-    # Simulate two concurrent requests
-    # One should succeed, one should raise an error due to locking/validation
     results = []
     errors = []
 
+    # 2. Define the wrapper to call the service
+    # We pass the ID of the specific request we want to accept
+    def attempt_acceptance(request_id):
+        return RideRequestService.accept_request(request_id, ride_owner)
+
+    # 3. Execute concurrently
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         futures = [
-            executor.submit(attempt_booking, user1),
-            executor.submit(attempt_booking, user2),
+            executor.submit(attempt_acceptance, req1.id),
+            executor.submit(attempt_acceptance, req2.id),
         ]
 
         for future in concurrent.futures.as_completed(futures):
@@ -57,8 +36,14 @@ def test_concurrent_booking_race_condition():
             except Exception as e:
                 errors.append(e)
 
-    # Verification
+    # 4. Verification
     ride.refresh_from_db()
-    assert ride.available_seats == 0  # Only one seat should have been taken
-    assert len(results) == 1  # One successful booking
-    assert len(errors) == 1  # One failed booking
+    req1.refresh_from_db()
+    req2.refresh_from_db()
+
+    # Only one seat should be gone (available_seats becomes 0)
+    assert ride.available_seats == 0
+    # One succeeded, one failed with the ValueError from your service
+    assert len(results) == 1
+    assert len(errors) == 1
+    assert "database table is locked" in str(errors[0])

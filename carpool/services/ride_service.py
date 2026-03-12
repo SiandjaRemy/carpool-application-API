@@ -1,4 +1,3 @@
-import uuid
 from datetime import timedelta
 
 from django.db import transaction

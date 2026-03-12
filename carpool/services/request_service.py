@@ -5,6 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from carpool.models import RideRequest, Ride, Reservation
 from carpool.enums.enums import RequestStatus, RideStatus
+from carpool.services.reservation_service import ReservationService
 
 
 class RideRequestService:
@@ -37,6 +38,8 @@ class RideRequestService:
                 .select_related("ride")
                 .get(id=request_id, ride__user=user)
             )
+
+            ride = Ride.objects.select_for_update().get(id=request.ride.id)
         except RideRequest.DoesNotExist:
             raise ValueError("Ride request not found or you don't have permission")
 
@@ -53,12 +56,9 @@ class RideRequestService:
         request.is_active = False
         request.save(update_fields=["status", "is_active", "updated_at"])
 
-        request.ride.available_seats -= request.seats_requested
-        request.ride.save(update_fields=["available_seats", "updated_at"])
-
-        # Create reservation
-        Reservation.objects.create(
-            ride=request.ride,
+        # Create reservation using ReservationService
+        ReservationService.create_reservation(
+            ride=ride,
             passenger=request.passenger,
             seats_requested=request.seats_requested,
             price_per_seat=request.ride.price_per_seat,
