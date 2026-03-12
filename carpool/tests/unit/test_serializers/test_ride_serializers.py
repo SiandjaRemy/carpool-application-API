@@ -72,7 +72,7 @@ class TestRideSerializer:
         serializer.is_valid()
         serializer.save()
         assert serializer.data["id"] is not None
-        assert serializer.data["status"] == RideStatus.SHECDULED
+        assert serializer.data["status"] == RideStatus.SCHEDULED
 
     def test_serializer_rejects_invalid_data(self, db):
         """Test that serializer rejects invalid data"""

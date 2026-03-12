@@ -39,23 +39,23 @@ class ReservationsModelSerializer(serializers.ModelSerializer):
 
         ride = (
             Ride.objects.select_related("user")
-            .filter(id=ride_id, status=RideStatus.SHECDULED, fully_reserved=False)
+            .filter(id=ride_id, status=RideStatus.SCHEDULED, fully_reserved=False)
             .first()
         )
         if ride is None:
             raise serializers.ValidationError(
-                {"message": "Corresponding ride not found"}
+                {"detail": "Corresponding ride not found"}
             )
 
         if ride.user == user:
             raise serializers.ValidationError(
-                {"message": "You cant reserve a seat for a ride you created"}
+                {"detail": "You cant reserve a seat for a ride you created"}
             )
 
         if seats_requested > ride.available_seats:
             raise serializers.ValidationError(
                 {
-                    "message": f"Only {ride.available_seats} seats are available for this ride"
+                    "detail": f"Only {ride.available_seats} seats are available for this ride"
                 }
             )
 

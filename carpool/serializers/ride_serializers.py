@@ -79,19 +79,25 @@ class RideUpdateSerializer(serializers.ModelSerializer):
     def validate_departure_datetime(self, value):
         """Ensure departure time is in the future"""
         if value <= timezone.now():
-            raise serializers.ValidationError("Departure time must be in the future")
+            raise serializers.ValidationError(
+                {"detail": "Departure time must be in the future"}
+            )
         return value
 
     def validate_available_seats(self, value):
         """Ensure seats are positive"""
         if value < 0:
-            raise serializers.ValidationError("Available seats cannot be negative")
+            raise serializers.ValidationError(
+                {"detail": "Available seats cannot be negative"}
+            )
         return value
 
     def validate_price_per_seat(self, value):
         """Ensure price is positive"""
         if value < 0:
-            raise serializers.ValidationError("Price per seat must be positive")
+            raise serializers.ValidationError(
+                {"detail": "Price per seat must be positive"}
+            )
         return value
 
 

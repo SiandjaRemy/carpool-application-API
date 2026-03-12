@@ -42,7 +42,7 @@ class RideFactory(DjangoModelFactory):
     )
     available_seats = 10
     price_per_seat = 25.50
-    status = RideStatus.SHECDULED
+    status = RideStatus.SCHEDULED
 
 
 class FullyReservedRideFactory(RideFactory):

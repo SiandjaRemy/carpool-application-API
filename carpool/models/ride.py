@@ -31,7 +31,7 @@ class Ride(TimeStampedModel):
         validators=[MinValueValidator(1)],
     )
     status = models.CharField(
-        max_length=20, choices=RideStatus.choices, default=RideStatus.SHECDULED
+        max_length=20, choices=RideStatus.choices, default=RideStatus.SCHEDULED
     )
     fully_reserved = models.BooleanField(default=False)
 

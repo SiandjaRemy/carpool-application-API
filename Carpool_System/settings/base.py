@@ -62,6 +62,7 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
+    "NON_FIELD_ERRORS_KEY": "detail",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
@@ -86,6 +87,7 @@ SWAGGER_SETTINGS = {
     }
 }
 
+SWAGGER_USE_COMPAT_RENDERERS = False
 
 DJOSER = {
     "ACTIVATION_URL": "#/activate/{uid}/{token}",

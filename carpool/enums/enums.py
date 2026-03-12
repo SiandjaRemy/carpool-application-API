@@ -16,7 +16,7 @@ class ReservationPaymentStatus(models.TextChoices):
 
 
 class RideStatus(models.TextChoices):
-    SHECDULED = "scheduled", "Scheduled"
+    SCHEDULED = "scheduled", "Scheduled"
     IN_PROGRESS = "in_progres", "In Progress"
     COMPLETED = "completed", "Completed"
     CANCELLED = "cancelled", "Cancelled"

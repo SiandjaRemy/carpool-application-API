@@ -29,7 +29,7 @@ class RideModelViewset(viewsets.ModelViewSet):
         queryset = (
             Ride.objects.select_related("user")
             .filter(
-                status=RideStatus.SHECDULED,
+                status=RideStatus.SCHEDULED,
                 departure_datetime__gte=current_time,
                 available_seats__gt=0,
             )

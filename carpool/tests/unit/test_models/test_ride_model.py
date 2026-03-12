@@ -34,7 +34,7 @@ class TestRideModel:
         )
 
         assert ride.id is not None
-        assert ride.status == RideStatus.SHECDULED
+        assert ride.status == RideStatus.SCHEDULED
         assert not ride.fully_reserved
 
     def test_ride_factory_creates_valid_ride(self, db):
@@ -42,7 +42,7 @@ class TestRideModel:
         ride = RideFactory()
 
         assert ride.id is not None
-        assert ride.status == RideStatus.SHECDULED
+        assert ride.status == RideStatus.SCHEDULED
         assert ride.available_seats >= 1
         assert ride.available_seats <= 10
         assert ride.price_per_seat == 25.50
