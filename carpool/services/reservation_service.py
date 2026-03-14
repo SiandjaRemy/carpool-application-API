@@ -250,12 +250,9 @@ class ReservationService:
         Returns:
             bool: True if payment succeeded, False otherwise
         """
-
-        # Simulate payment processing (replace with real logic)
-        import random
-
-        # 90% success rate for simulation
-        return random.random() < 0.9
+        # Add payment logic here
+        # This is just a demo projec so for now i'll always return true
+        return True
 
     @classmethod
     @transaction.atomic
