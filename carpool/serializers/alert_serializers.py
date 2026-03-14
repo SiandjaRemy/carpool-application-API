@@ -13,7 +13,15 @@ class RideAlertModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RideAlert
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "departure_town",
+            "arrival_town",
+            "before_date",
+            "after_date",
+            "is_active",
+        ]
 
         read_only_fields = ["user", "is_active"]
 

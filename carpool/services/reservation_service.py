@@ -2,10 +2,11 @@ from datetime import timedelta
 
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Q, Sum, Count
+from django.db.models import Q, Sum, Count, When, Case, Value, F
+from django.db.models.fields import CharField
 
 from carpool.models import Reservation, Ride
-from carpool.enums.enums import ReservationPaymentStatus, RideStatus
+from carpool.enums.enums import ReservationPaymentStatus, RideStatus, ReservationStatus
 
 
 class ReservationService:
@@ -43,19 +44,21 @@ class ReservationService:
         if reservation.passenger != passenger:
             raise PermissionError("You can only cancel your own reservations")
 
-        # Check if ride hasn't departed yet
-        if reservation.ride.departure_datetime <= timezone.now():
-            raise ValueError(
-                "Cannot cancel reservation for a ride that has already departed"
-            )
+        #
+        if reservation.payment_status == ReservationPaymentStatus.PAID:
+            # Check if ride hasn't departed yet
+            if reservation.ride.departure_datetime <= timezone.now():
+                raise ValueError(
+                    "Cannot cancel paid reservation for a ride that has already departed"
+                )
 
-        # Check cancellation timeframe (e.g., 2 hours before departure)
-        time_until_departure = reservation.ride.departure_datetime - timezone.now()
-        if time_until_departure < timedelta(hours=2):
-            raise ValueError(
-                "Cannot cancel reservation less than 2 hours before departure. "
-                "Please contact the driver directly."
-            )
+            # Check cancellation timeframe (e.g., 2 hours before departure)
+            time_until_departure = reservation.ride.departure_datetime - timezone.now()
+            if time_until_departure < timedelta(hours=2):
+                raise ValueError(
+                    "Cannot cancel paid reservation less than 2 hours before departure. "
+                    "Please contact the driver directly."
+                )
 
     @classmethod
     @transaction.atomic
@@ -114,9 +117,19 @@ class ReservationService:
         # Lock the ride
         ride = Ride.objects.select_for_update().get(id=reservation.ride.id)
 
-        # Update reservation status
-        reservation.payment_status = ReservationPaymentStatus.REFUNDED
-        reservation.save(update_fields=["status", "updated_at"])
+        # Update reservation status conditionally
+        if reservation.payment_status in [
+            ReservationPaymentStatus.PENDING,
+            ReservationPaymentStatus.FAILED,
+        ]:
+            reservation.payment_status = ReservationPaymentStatus.PAYMENT_DISABLED
+            reservation.status = ReservationStatus.CANCELLED
+        elif reservation.payment_status == ReservationPaymentStatus.PAID:
+            # Trigger refund logic
+            reservation.payment_status = ReservationPaymentStatus.PAYMENT_DISABLED
+            reservation.status = ReservationStatus.CANCELLED
+
+        reservation.save(update_fields=["status", "payment_status", "updated_at"])
 
         # Return seats to the ride
         ride.available_seats += reservation.seats_requested
@@ -132,6 +145,40 @@ class ReservationService:
         return reservation
 
     @classmethod
+    @transaction.atomic
+    def cancel_ride_reservations(cls, ride_id):
+        """
+        Cancel all reservations for a ride in bulk
+        """
+        # Get all reservations for the ride
+        reservations = Reservation.objects.filter(ride_id=ride_id)
+
+        if not reservations.exists():
+            return reservations.none()  # Return empty queryset
+
+        # Perform bulk update with conditional logic
+        updated_count = reservations.select_for_update().update(
+            payment_status=Case(
+                When(
+                    payment_status=ReservationPaymentStatus.PAID,
+                    then=Value(ReservationPaymentStatus.REFUNDED),
+                ),
+                When(
+                    payment_status__in=[
+                        ReservationPaymentStatus.PENDING,
+                        ReservationPaymentStatus.FAILED,
+                    ],
+                    then=Value(ReservationPaymentStatus.PAYMENT_DISABLED),
+                ),
+                default=F("payment_status"),
+                output_field=CharField(),
+            ),
+            status=ReservationStatus.CANCELLED,
+        )
+
+        return "Done"
+
+    @classmethod
     def get_reservation_stats(cls, ride_id, user):
         """
         Get statistics about reservations for a ride (for ride owner)
@@ -145,14 +192,29 @@ class ReservationService:
             raise PermissionError("Only the ride owner can view reservation statistics")
 
         stats = Reservation.objects.filter(ride=ride).aggregate(
-            total_reservations=Sum("seats_requested"),
-            passenger_count=Count("id"),
-            cancelled_count=Count("id", filter=Q(status="cancelled")),
+            paid_reservations=Count(
+                "id",
+                filter=Q(status=ReservationStatus.CONFIRMED),
+            ),
+            pending_reservations=Count(
+                "id",
+                filter=Q(status=ReservationStatus.PENDING),
+            ),
+            total_paid_seats=Sum(
+                "seats_requested", filter=Q(status=ReservationStatus.CONFIRMED)
+            ),
+            total_unpaid_seats=Sum(
+                "seats_requested",
+                filter=Q(status=ReservationStatus.PENDING),
+            ),
+            cancelled_count=Count("id", filter=Q(status=ReservationStatus.CANCELLED)),
         )
 
         return {
-            "total_seats_reserved": stats["total_reservations"] or 0,
-            "passenger_count": stats["passenger_count"] or 0,
+            "paid_reservations": stats["paid_reservations"] or 0,
+            "total_paid_seats": stats["total_paid_seats"] or 0,
+            "pending_reservations": stats["pending_reservations"] or 0,
+            "total_unpaid_seats": stats["total_unpaid_seats"] or 0,
             "cancelled_count": stats["cancelled_count"] or 0,
             "available_seats": ride.available_seats,
             "is_fully_reserved": ride.fully_reserved,

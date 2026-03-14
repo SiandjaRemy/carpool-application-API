@@ -95,7 +95,7 @@ class ReservationFactory(DjangoModelFactory):
 class ConfirmedReservationFactory(ReservationFactory):
     """Factory for confirmed reservations"""
 
-    payment_status = ReservationPaymentStatus.CONFIRMED
+    payment_status = ReservationPaymentStatus.PAID
     confirmed_at = factory.LazyFunction(lambda: timezone.now())
 
 

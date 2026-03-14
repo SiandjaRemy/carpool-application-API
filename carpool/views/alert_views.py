@@ -15,8 +15,9 @@ from carpool.serializers.base_serializers import BlankSerializer
 
 from drf_yasg.utils import swagger_auto_schema
 
+from carpool.services.alert_service import RideAlertService
 
-@swagger_auto_schema(tags=["Ride Alerts"])
+
 class RideAlertModelViewset(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "patch"]
     serializer_class = RideAlertModelSerializer
@@ -62,14 +63,10 @@ class RideAlertModelViewset(viewsets.ModelViewSet):
             raise ValidationError({"error": "pk is required"})
         user = self.request.user
         try:
-            request = RideAlert.objects.get(id=pk, user=user)
-            request.is_active = not request.is_active
-            request.save()
-            request_status = "Active" if request.is_active else "Inactive"
-            data = {"message": f"Alert is now {request_status}"}
+            alert = RideAlertService.toggle_alert(alert_id=pk, user=user)
+            alert_status = "Active" if alert.is_active else "Inactive"
+            data = {"message": f"Alert is now {alert_status}"}
             return Response(data, status=status.HTTP_200_OK)
 
-        except RideAlert.DoesNotExist:
-            raise ValidationError({"message": "No corresponding alert found"})
         except Exception as e:
             raise ValidationError({"error": str(e)})

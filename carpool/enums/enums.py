@@ -11,9 +11,16 @@ class RequestStatus(models.TextChoices):
 
 class ReservationPaymentStatus(models.TextChoices):
     PENDING = "pending", "Pending"
-    CONFIRMED = "confirmed", "Confirmed"
+    PAID = "paid", "Paid"
     REFUNDED = "refunded", "Refunded"
     FAILED = "failed", "Failed"
+    PAYMENT_DISABLED = "payment_disabled", "Payment Disabled"
+
+
+class ReservationStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    CONFIRMED = "confirmed", "Confirmed"
+    CANCELLED = "cancelled", "Cancelled"
 
 
 class RideStatus(models.TextChoices):

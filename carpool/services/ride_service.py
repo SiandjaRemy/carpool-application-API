@@ -4,7 +4,9 @@ from django.db import transaction
 from django.utils import timezone
 
 from carpool.models import Ride
-from carpool.enums.enums import RequestStatus, RideStatus
+from carpool.enums.enums import RequestStatus, ReservationPaymentStatus, RideStatus
+from carpool.services.request_service import RideRequestService
+from carpool.services.reservation_service import ReservationService
 
 
 class RideService:
@@ -59,6 +61,7 @@ class RideService:
         if "price_per_seat" in data and data["price_per_seat"] < 0:
             raise ValueError("You must set a price per seat")
 
+    @staticmethod
     def _validate_ride_cancelation(ride, user):
         """Validate ride update data"""
         # Can only update scheduled rides
@@ -129,11 +132,8 @@ class RideService:
         # Validate cancelation
         cls._validate_ride_cancelation(ride, user)
 
-        # Check if there are any accepted requests
-        if ride.requests.filter(status=RequestStatus.ACCEPTED).exists():
-            # Need to handle cancellations with accepted requests
-            # Auto-cancel all requests
-            ride.requests.update(status=RequestStatus.DRIVER_CANCELLED)
+        # Auto cancel all ride requests if they exist
+        RideRequestService.cancel_ride_requests(ride_id=ride_id)
 
         ride.status = RideStatus.CANCELLED
         ride.save(update_fields=["status", "updated_at"])

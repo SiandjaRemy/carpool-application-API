@@ -15,7 +15,8 @@ class RideAlert(TimeStampedModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="ride_alerts")
     departure_town = models.CharField(max_length=255)
     arrival_town = models.CharField(max_length=255)
-    departure_datetime = models.DateField()
+    before_date = models.DateTimeField(null=True, blank=True)
+    after_date = models.DateTimeField(null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
 

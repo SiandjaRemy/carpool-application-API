@@ -1,10 +1,9 @@
-# carpool/services/request_service.py
 import uuid
 
 from django.db import transaction
 from django.utils import timezone
-from carpool.models import RideRequest, Ride, Reservation
-from carpool.enums.enums import RequestStatus, RideStatus
+from carpool.models import RideRequest, Ride
+from carpool.enums.enums import RequestStatus
 from carpool.services.reservation_service import ReservationService
 
 
@@ -123,5 +122,47 @@ class RideRequestService:
         request.status = RequestStatus.CANCELLED
         request.is_active = False
         request.save(update_fields=["status", "is_active", "updated_at"])
+
+        return request
+
+    @classmethod
+    @transaction.atomic
+    def cancel_ride_requests(cls, ride_id):
+        """
+        Cancel all requests for a ride in bulk
+        """
+        # Get all requests for the ride
+        requests = RideRequest.objects.filter(ride_id=ride_id)
+
+        if not requests.exists():
+            return requests.none()  # Return empty queryset
+
+        # Update the status of the accepted request
+        accepted_request = requests.filter(
+            ride_id=ride_id, status=RequestStatus.ACCEPTED
+        ).update(
+            status=RequestStatus.DRIVER_CANCELLED,
+        )
+
+        # Auto cancel all reservations "appropriatly" if they exist
+        ReservationService.cancel_ride_reservations(ride_id=ride_id)
+
+        return "Done"
+
+    @classmethod
+    @transaction.atomic
+    def toggle_request(cls, request_id: uuid.UUID, user):
+        """
+        Toggle request active status
+        """
+        try:
+            request = RideRequest.objects.select_for_update().get(
+                id=request_id, passenger=user
+            )
+        except RideRequest.DoesNotExist:
+            raise ValueError("Ride request not found")
+
+        request.is_active = not request.is_active
+        request.save(update_fields=["is_active", "updated_at"])
 
         return request

@@ -1,4 +1,4 @@
-from rest_framework import serializers, viewsets, status
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
@@ -24,6 +24,7 @@ from carpool.serializers.request_serializers import (
     RideRequestModelSerializer,
     RideRequestUpdateModelSerializer,
 )
+from carpool.services.request_service import RideRequestService
 
 
 class RideRequestModelViewset(viewsets.ModelViewSet):
@@ -100,15 +101,12 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
             raise ValidationError({"detail": "pk is required"})
         user = self.request.user
         try:
-            request = RideRequest.objects.get(id=pk, ride_id=rides_pk, passenger=user)
-            request.is_active = not request.is_active
-            request.save()
-            request_status = "Active" if request.is_active else "Inactive"
+            updated_request = RideRequestService.toggle_request(
+                request_id=pk, user=user
+            )
+            request_status = "Active" if updated_request.is_active else "Inactive"
             data = {"detail": f"Request is now {request_status}"}
             return Response(data, status=status.HTTP_200_OK)
-
-        except RideRequest.DoesNotExist:
-            raise ValidationError({"detail": "No corresponding request found"})
         except Exception as e:
             raise ValidationError({"detail": str(e)})
 

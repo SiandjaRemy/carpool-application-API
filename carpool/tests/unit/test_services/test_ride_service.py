@@ -2,8 +2,18 @@ import pytest
 from datetime import timedelta
 from django.utils import timezone
 from carpool.services.ride_service import RideService
-from carpool.enums.enums import RequestStatus, RideStatus
-from carpool.tests.factories import UserFactory, RideFactory, RideRequestFactory
+from carpool.enums.enums import (
+    RequestStatus,
+    ReservationPaymentStatus,
+    ReservationStatus,
+    RideStatus,
+)
+from carpool.tests.factories import (
+    ReservationFactory,
+    UserFactory,
+    RideFactory,
+    RideRequestFactory,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -81,12 +91,18 @@ class TestRideService:
         assert cancelled_ride.status == RideStatus.CANCELLED
 
     def test_cancel_ride_with_accepted_requests(self, db):
-        """Test cannot cancel ride with accepted requests"""
+        """Test cancel ride with accepted requests and refund paid reservations"""
         user = UserFactory()
         ride = RideFactory(user=user)
-        RideRequestFactory(ride=ride, status=RequestStatus.ACCEPTED)
+        ride_request = RideRequestFactory(ride=ride, status=RequestStatus.ACCEPTED)
+
+        ride_reservation = ReservationFactory.from_request(ride_request)
 
         RideService.cancel_ride(ride.id, user)
 
         # The related requests will be set to cancelled by the user
         assert ride.requests.filter(status=RequestStatus.DRIVER_CANCELLED).exists()
+        assert ride.reservations.filter(status=ReservationStatus.CANCELLED).exists()
+        assert ride.reservations.filter(
+            payment_status=ReservationPaymentStatus.PAYMENT_DISABLED
+        ).exists()

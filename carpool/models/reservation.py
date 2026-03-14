@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-from carpool.enums.enums import ReservationPaymentStatus
+from carpool.enums.enums import ReservationPaymentStatus, ReservationStatus
 from carpool.models.base import TimeStampedModel
 from carpool.models.ride import Ride
 
@@ -25,6 +25,11 @@ class Reservation(TimeStampedModel):
         max_length=20,
         choices=ReservationPaymentStatus.choices,
         default=ReservationPaymentStatus.PENDING,
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=ReservationStatus.choices,
+        default=ReservationStatus.PENDING,
     )
     seats_requested = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)]
