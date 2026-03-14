@@ -80,6 +80,7 @@ class ReservationFactory(DjangoModelFactory):
     seats_requested = factory.Faker("random_int", min=1, max=10)
     price_per_seat = 25.50
     payment_status = ReservationPaymentStatus.PENDING
+    created_at = factory.LazyFunction(timezone.now)
 
     @classmethod
     def from_request(cls, ride_request: RideRequest):

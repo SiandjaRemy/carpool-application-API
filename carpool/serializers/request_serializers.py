@@ -151,7 +151,7 @@ class AcceptRideRequestSerializer(serializers.Serializer):
 
         return {
             "request": ride_request,
-            "detail": "Accepted rejected successfully",
+            "detail": "Request rejected successfully",
         }
 
 

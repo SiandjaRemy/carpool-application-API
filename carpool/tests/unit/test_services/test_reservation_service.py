@@ -207,6 +207,97 @@ class TestReservationService:
             )
 
     # ----------------------------------------------------------------------
+    # Pay for Reservation Tests
+    # ----------------------------------------------------------------------
+
+    def test_pay_reservation_happy_path(self, db):
+        """Test payment for a reservation successfully"""
+        passenger = UserFactory()
+        ride = RideFactory(available_seats=4)
+
+        reservation = ReservationFactory(
+            ride=ride, passenger=passenger, seats_requested=2
+        )
+        ride.available_seats = 2
+        ride.save()
+
+        pay = ReservationService.pay_reservation(
+            reservation_id=reservation.id, passenger=passenger, payment_method="stripe"
+        )
+
+        assert pay.id == reservation.id
+        assert pay.payment_status == ReservationPaymentStatus.PAID
+
+        # Verify seats returned to ride
+        ride.refresh_from_db()
+        assert ride.available_seats == 2
+        assert ride.reservations.filter(payment_status=ReservationPaymentStatus.PAID)
+        assert ride.fully_reserved is False
+
+    def test_pay_reservation_wrong_user(self, db):
+        """Test cannot pay for another user's reservation"""
+        passenger = UserFactory()
+        other_user = UserFactory()
+        reservation = ReservationFactory(passenger=passenger)
+
+        with pytest.raises(
+            PermissionError, match="You can only pay for your own reservations"
+        ):
+            ReservationService.pay_reservation(
+                reservation_id=reservation.id, passenger=other_user
+            )
+
+    def test_cancel_paid_reservation_ride_departed(self, db, freezer):
+        """Test cannot pay for a paid reservation"""
+        passenger = UserFactory()
+
+        # Create ride that departed 1 hour ago
+        ride = RideFactory()
+        reservation = ReservationFactory(
+            ride=ride,
+            passenger=passenger,
+        )
+
+        # Payment is done here
+        ReservationService.pay_reservation(
+            reservation_id=reservation.id, passenger=passenger
+        )
+
+        # Try paying again
+        with pytest.raises(ValueError, match="already paid"):
+            ReservationService.pay_reservation(
+                reservation_id=reservation.id, passenger=passenger
+            )
+
+    def test_pay_for_a_reservation_ride_departed(self, db, freezer):
+        """Test cannot pay for a reservation for departed ride"""
+        passenger = UserFactory()
+        now = timezone.now()
+        freezer.move_to(now)
+
+        # Create ride that departed 1 hour ago
+        ride = RideFactory(departure_datetime=now - timedelta(hours=1))
+        reservation = ReservationFactory(
+            ride=ride,
+            passenger=passenger,
+        )
+
+        with pytest.raises(ValueError, match="ride has started"):
+            ReservationService.pay_reservation(
+                reservation_id=reservation.id, passenger=passenger
+            )
+
+    def test_pay_reservation_not_found(self, db):
+        """Test paying for non-existent reservation"""
+        passenger = UserFactory()
+
+        with pytest.raises(ValueError, match="Reservation not found"):
+            ReservationService.pay_reservation(
+                reservation_id="00000000-0000-0000-0000-000000000000",
+                passenger=passenger,
+            )
+
+    # ----------------------------------------------------------------------
     # Get Reservation Stats Tests
     # ----------------------------------------------------------------------
 

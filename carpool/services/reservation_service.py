@@ -44,7 +44,9 @@ class ReservationService:
         if reservation.passenger != passenger:
             raise PermissionError("You can only cancel your own reservations")
 
-        #
+        if reservation.status == ReservationStatus.CANCELLED:
+            raise ValueError("This reservation is already cancelled")
+
         if reservation.payment_status == ReservationPaymentStatus.PAID:
             # Check if ride hasn't departed yet
             if reservation.ride.departure_datetime <= timezone.now():
@@ -59,6 +61,32 @@ class ReservationService:
                     "Cannot cancel paid reservation less than 2 hours before departure. "
                     "Please contact the driver directly."
                 )
+
+        elif reservation.payment_status in [
+            ReservationPaymentStatus.PENDING,
+            ReservationPaymentStatus.FAILED,
+        ]:
+            # Check if ride hasn't departed yet
+            if reservation.ride.departure_datetime <= timezone.now():
+                raise ValueError("This reservation will be cancelled automatically")
+
+    @staticmethod
+    def _validate_reservation_payment(reservation, passenger):
+        """Validate if a reservation can be cancelled"""
+
+        # Check if reservation belongs to passenger
+        if reservation.passenger != passenger:
+            raise PermissionError("You can only pay for your own reservations")
+
+        if reservation.status == ReservationStatus.CANCELLED:
+            raise ValueError("You cant pay for cancelled reservations")
+
+        if reservation.status == ReservationStatus.CONFIRMED:
+            raise ValueError("You have already paid for this reservations")
+
+        # Check if ride hasn't departed yet
+        if reservation.ride.departure_datetime <= timezone.now():
+            raise ValueError("Too late, ride has started")
 
     @classmethod
     @transaction.atomic
@@ -143,6 +171,91 @@ class ReservationService:
         # )
 
         return reservation
+
+    @classmethod
+    @transaction.atomic
+    def pay_reservation(cls, reservation_id, passenger, payment_method="stripe"):
+        """
+        Process payment for a reservation.
+
+        Args:
+            reservation_id: UUID of the reservation
+            passenger: User object making the payment
+            payment_method: Payment method details
+
+        Returns:
+            Updated reservation object
+
+        The reservation status remains PENDING until payment succeeds.
+        If payment fails, payment_status becomes FAILED but status stays PENDING
+        allowing the user to retry.
+        """
+        try:
+            reservation = (
+                Reservation.objects.select_for_update()
+                .select_related("ride")
+                .get(id=reservation_id)
+            )
+        except Reservation.DoesNotExist:
+            raise ValueError("Reservation not found")
+
+        # Validate the reservation can be paid
+        cls._validate_reservation_payment(reservation, passenger)
+        # Process the payment
+        try:
+            # Simulate payment processing - replace with actual payment gateway
+            payment_successful = cls._process_payment(reservation, payment_method)
+
+            if payment_successful:
+                # Payment succeeded
+                reservation.payment_status = ReservationPaymentStatus.PAID
+                reservation.status = ReservationStatus.CONFIRMED
+                reservation.confirmed_at = timezone.now()
+
+                # Optionally send confirmation
+                # from carpool.tasks import send_payment_confirmation
+                # transaction.on_commit(
+                #     lambda: send_payment_confirmation.delay(reservation.id)
+                # )
+            else:
+                # Payment failed - keep status PENDING for retry
+                reservation.payment_status = ReservationPaymentStatus.FAILED
+                # status remains PENDING - user can retry
+
+        except Exception as e:
+            # Unexpected error during payment processing
+            reservation.payment_status = ReservationPaymentStatus.FAILED
+            # Log the error for debugging
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.error(
+                f"Payment processing error for reservation {reservation_id}: {str(e)}"
+            )
+            raise ValueError(f"Payment processing failed: {str(e)}")
+
+        # Save changes
+        reservation.save(
+            update_fields=["status", "payment_status", "confirmed_at", "updated_at"]
+        )
+
+        return reservation
+
+    @staticmethod
+    def _process_payment(reservation, payment_method=None):
+        """
+        Simulate payment processing.
+        Replace this with actual payment gateway integration.
+
+        Returns:
+            bool: True if payment succeeded, False otherwise
+        """
+
+        # Simulate payment processing (replace with real logic)
+        import random
+
+        # 90% success rate for simulation
+        return random.random() < 0.9
 
     @classmethod
     @transaction.atomic
