@@ -3,12 +3,70 @@ import uuid
 from django.db import transaction
 from django.utils import timezone
 from carpool.models import RideRequest, Ride
-from carpool.enums.enums import RequestStatus
+from carpool.enums.enums import RequestStatus, ReservationStatus, RideStatus
 from carpool.services.reservation_service import ReservationService
 
 
 class RideRequestService:
     """Service layer for ride request business logic"""
+
+    @staticmethod
+    def _validate_request_creation(ride, passenger, request_data):
+        """Validate reservation data before creation"""
+        # Check if ride exists and is available
+        if ride.status != RideStatus.SCHEDULED:
+            raise ValueError("Cannot request seats for a ride that is not scheduled")
+
+        if ride.fully_reserved:
+            raise ValueError("This ride is fully reserved")
+
+        # Check if user is trying to reserve their own ride (This is just an extra check tho)
+        if ride.user == passenger:
+            raise ValueError("You cannot reserve seats for a ride you created")
+
+        # Check seat availability
+        if request_data["seats_requested"] > ride.available_seats:
+            if ride.available_seats == 0:
+                raise ValueError("This ride is fully reserved")
+            else:
+                raise ValueError(
+                    f"Only {ride.available_seats} seats are available for this ride"
+                )
+
+        if ride.requests.filter(
+            passenger=passenger, status=RequestStatus.PENDING
+        ).exists():
+            raise ValueError(
+                "You already have a reservation. Cancel it first if you wish to make a new request"
+            )
+
+    @staticmethod
+    def _validate_request_update(instance, data):
+        """Validate ride request update data"""
+        # Can only update scheduled requests
+        if instance.status != RequestStatus.PENDING:
+            raise ValueError("This request cannot be updated.")
+
+        # The checks bellow are extra checks and are optional
+        # Check price if being updated
+        if "price_per_seat" in data and data["price_per_seat"] < 0:
+            raise ValueError("Price per seat must be positive")
+
+        # Check seats if being updated
+        if "seats_requested" in data:
+            if data["seats_requested"] < 0:
+                raise ValueError("Seats requested must be positive.")
+            else:
+                ride = instance.ride
+                current_seats = instance.seats_requested
+
+                # If increasing seats, check availability
+                if data["seats_requested"] > current_seats:
+                    additional_seats = data["seats_requested"] - current_seats
+                    if ride.available_seats < data["seats_requested"]:
+                        raise ValueError(
+                            f"Cannot increase by {additional_seats}. Only {ride.available_seats} seats available."
+                        )
 
     @staticmethod
     def _validate_request_modification(request, user, allowed_roles):
@@ -25,6 +83,59 @@ class RideRequestService:
 
         if "passenger" in allowed_roles and request.passenger != user:
             raise PermissionError("Only passenger can perform this action")
+
+    @classmethod
+    @transaction.atomic
+    def create_request(cls, ride_id, passenger, request_data):
+        """
+        Create a new reservation for a ride
+        """
+
+        try:
+            ride = Ride.objects.prefetch_related("requests").get(id=ride_id)
+        except Ride.DoesNotExist:
+            raise ValueError("Ride not found or you don't have permission")
+
+        # Validate
+        cls._validate_request_creation(ride, passenger, request_data)
+
+        request_data["ride"] = ride
+        request_data["passenger"] = passenger
+
+        try:
+            # Create ride_request
+            ride_request = RideRequest.objects.create(**request_data)
+
+            # Trigger notifications
+            # from carpool.tasks import send_ride_request_confirmation
+            # transaction.on_commit(
+            #     lambda: send_ride_request_confirmation.delay(ride_request.id)
+            # )
+
+            return ride_request
+
+        except Exception as e:
+            raise ValueError(f"Failed to create request: {str(e)}")
+
+    @classmethod
+    @transaction.atomic
+    def update_request(cls, update_data, instance, passenger):
+        """
+        Update an existing ride request
+        """
+        if instance.passenger != passenger:
+            raise ValueError("Ride not found or you don't have permission")
+
+        # Validate update
+        cls._validate_request_update(instance, update_data)
+
+        # Update fields
+        for field, value in update_data.items():
+            setattr(instance, field, value)
+
+        instance.save(update_fields=list(update_data.keys()) + ["updated_at"])
+
+        return instance
 
     @classmethod
     @transaction.atomic

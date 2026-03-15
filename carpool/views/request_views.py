@@ -2,7 +2,6 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 
 from django.db.models import Q
 
@@ -22,7 +21,6 @@ from carpool.serializers.request_serializers import (
     CancelRideRequestSerializer,
     RejectRideRequestSerializer,
     RideRequestModelSerializer,
-    RideRequestUpdateModelSerializer,
 )
 from carpool.services.request_service import RideRequestService
 
@@ -47,25 +45,28 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
         context = {}
         if user.is_authenticated:
             ride_id = self.kwargs.get("rides_pk")
+            request_id = self.kwargs.get("pk")
             context = {
                 "user": user,
                 "ride_id": ride_id,
+                "request_id": request_id,
             }
         return context
 
     def get_serializer_class(self):
         """Return different serializers based on action"""
-        if self.action in ["update", "partial_update"]:
-            return RideRequestUpdateModelSerializer
-        elif self.action in ["create", "retrieve", "list", "my-request"]:
-            return RideRequestModelSerializer
+        if self.action == "toggle-active":
+            return BlankSerializer
         elif self.action == "accept":
             return AcceptRideRequestSerializer
         elif self.action == "reject":
             return RejectRideRequestSerializer
         elif self.action == "cancel":
             return CancelRideRequestSerializer
-        return BlankSerializer
+        return RideRequestModelSerializer
+
+    def get_exception_handler(self):
+        return super().get_exception_handler()
 
     @action(
         methods=["GET"],
@@ -97,18 +98,11 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated, IsRequestOwner],
     )
     def toggle_active(self, request, rides_pk=None, pk=None):
-        if not pk:
-            raise ValidationError({"detail": "pk is required"})
         user = self.request.user
-        try:
-            updated_request = RideRequestService.toggle_request(
-                request_id=pk, user=user
-            )
-            request_status = "Active" if updated_request.is_active else "Inactive"
-            data = {"detail": f"Request is now {request_status}"}
-            return Response(data, status=status.HTTP_200_OK)
-        except Exception as e:
-            raise ValidationError({"detail": str(e)})
+        updated_request = RideRequestService.toggle_request(request_id=pk, user=user)
+        request_status = "Active" if updated_request.is_active else "Inactive"
+        data = {"detail": f"Request is now {request_status}"}
+        return Response(data, status=status.HTTP_200_OK)
 
     @action(
         methods=["POST"],
@@ -133,29 +127,15 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
 
         serializer.is_valid(raise_exception=True)
 
-        try:
-            result = serializer.save()
+        result = serializer.save()
 
-            return Response(
-                {
-                    "detail": result["detail"],
-                    "request_status": result["request"].status,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        except ValueError as e:
-            # Handle validation errors (400)
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except PermissionError as e:
-            # Handle permission errors (403)
-            return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
-        except Exception as e:
-            # Handle unexpected errors (500)
-            return Response(
-                {"detail": f"An unexpected error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        return Response(
+            {
+                "detail": result["detail"],
+                "request_status": result["request"].status,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(
         methods=["POST"],
@@ -180,29 +160,15 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
 
         serializer.is_valid(raise_exception=True)
 
-        try:
-            result = serializer.save()
+        result = serializer.save()
 
-            return Response(
-                {
-                    "detail": result["detail"],
-                    "request_status": result["request"].status,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        except ValueError as e:
-            # Handle validation errors (400)
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except PermissionError as e:
-            # Handle permission errors (403)
-            return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
-        except Exception as e:
-            # Handle unexpected errors (500)
-            return Response(
-                {"detail": f"An unexpected error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        return Response(
+            {
+                "detail": result["detail"],
+                "request_status": result["request"].status,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(
         methods=["POST"],
@@ -227,26 +193,12 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
 
         serializer.is_valid(raise_exception=True)
 
-        try:
-            result = serializer.save()
+        result = serializer.save()
 
-            return Response(
-                {
-                    "detail": result["detail"],
-                    "request_status": result["request"].status,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        except ValueError as e:
-            # Handle validation errors (400)
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except PermissionError as e:
-            # Handle permission errors (403)
-            return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
-        except Exception as e:
-            # Handle unexpected errors (500)
-            return Response(
-                {"detail": f"An unexpected error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        return Response(
+            {
+                "detail": result["detail"],
+                "request_status": result["request"].status,
+            },
+            status=status.HTTP_200_OK,
+        )

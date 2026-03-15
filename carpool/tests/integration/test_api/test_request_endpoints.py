@@ -108,7 +108,7 @@ class TestRideRequestEndpoints:
         response = authenticated_client.post(url, data)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "seats" in str(response.data["detail"][0]).lower()
+        assert "seats" in str(response.data["detail"]).lower()
 
     def test_create_duplicate_request(self, authenticated_client, db):
         """Test user cannot create duplicate request for same ride"""
@@ -128,7 +128,7 @@ class TestRideRequestEndpoints:
         response = authenticated_client.post(url, data)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "already" in str(response.data["detail"][0]).lower()
+        assert "already" in str(response.data["detail"]).lower()
 
     def test_create_request_for_own_ride(self, authenticated_client, db):
         """Test driver cannot request their own ride"""
@@ -143,7 +143,7 @@ class TestRideRequestEndpoints:
         response = authenticated_client.post(url, data)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "a ride you created" in str(response.data["detail"][0]).lower()
+        assert "a ride you created" in str(response.data["detail"]).lower()
 
     def test_create_request_for_full_ride(self, authenticated_client, db):
         """Test creating request for a fully reserved ride"""
@@ -159,7 +159,7 @@ class TestRideRequestEndpoints:
         response = authenticated_client.post(url, data)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "fully reserved" in str(response.data["detail"][0]).lower()
+        assert "fully reserved" in str(response.data["detail"]).lower()
 
     # ----------------------------------------------------------------------
     # Retrieve Request (GET /rides/{ride_id}/requests/{request_id}/)
@@ -248,10 +248,11 @@ class TestRideRequestEndpoints:
             ride_request_detail_url, kwargs={"rides_pk": ride.id, "pk": ride_request.id}
         )
         data = {"seats_requested": 2}
+
         response = authenticated_client.patch(url, data)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "cannot be updated" in str(response.data["detail"][0]).lower()
+        assert "cannot be updated" in str(response.data["detail"]).lower()
 
     # ----------------------------------------------------------------------
     # Custom Actions

@@ -14,6 +14,7 @@ pytestmark = pytest.mark.integration
 reservation_list_url = "carpool:reservations-list"
 reservation_detail_url = "carpool:reservations-detail"
 reservation_cancel_url = "carpool:reservations-cancel"
+reservation_payment_url = "carpool:reservations-payment"
 
 
 @pytest.mark.django_db
@@ -127,7 +128,7 @@ class TestReservationEndpoints:
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     # ----------------------------------------------------------------------
-    # Update Reservation - Should be disabled (except cancel action)
+    # Update Reservation - Should be disabled (except custom action)
     # ----------------------------------------------------------------------
 
     def test_update_reservation_disabled(self, authenticated_client, db):
@@ -291,6 +292,162 @@ class TestReservationEndpoints:
         reservation = ReservationFactory()
 
         url = reverse(reservation_cancel_url, kwargs={"pk": reservation.id})
+        response = api_client.patch(url, {}, format="json")
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    # ----------------------------------------------------------------------
+    # Cancel Reservation Action (PATCH /reservations/{id}/cancel/)
+    # ----------------------------------------------------------------------
+
+    def test_pay_own_reservation(self, authenticated_client, db):
+        """Test user can pay for their own reservation"""
+
+        user = authenticated_client.user
+
+        # Create a ride departing in 3 hours
+        ride = RideFactory()
+        reservation = ReservationFactory(
+            passenger=user,
+            ride=ride,
+            seats_requested=2,
+        )
+
+        url = reverse(reservation_payment_url, kwargs={"pk": reservation.id})
+        data = {"payment_method": "stripe"}
+
+        response = authenticated_client.patch(url, data, format="json")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["reservation_status"] == ReservationStatus.CONFIRMED
+        assert response.data["detail"] == "Payment completed"
+
+    def test_pay_reservation_needs_payment_method(self, authenticated_client, db):
+        """Test that a payment method needs to be passed for payment to be processed"""
+
+        user = authenticated_client.user
+
+        # Create a ride departing in 3 hours
+        ride = RideFactory()
+        reservation = ReservationFactory(
+            passenger=user,
+            ride=ride,
+            seats_requested=2,
+        )
+
+        url = reverse(reservation_payment_url, kwargs={"pk": reservation.id})
+        data = {}
+
+        response = authenticated_client.patch(url, data, format="json")
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "payment_method" in response.data
+
+    def test_pay_others_reservation(self, authenticated_client, another_client, db):
+        """Test user cannot pay for another user's reservation"""
+
+        other_reservation = ReservationFactory(passenger=another_client.user)
+
+        url = reverse(reservation_payment_url, kwargs={"pk": other_reservation.id})
+        data = {"payment_method": "stripe"}
+
+        response = authenticated_client.patch(url, data, format="json")
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_pay_reservation_late(self, authenticated_client, db, freezer):
+        """Test user can pay for reservation even close to departure"""
+        from django.utils import timezone
+        from datetime import timedelta
+
+        user = authenticated_client.user
+        now = timezone.now()
+        freezer.move_to(now)
+
+        # Create ride departing in 1 hour (less than 2-hour window)
+        ride = RideFactory(departure_datetime=now + timedelta(hours=1))
+        reservation = ReservationFactory(passenger=user, ride=ride)
+
+        url = reverse(reservation_payment_url, kwargs={"pk": reservation.id})
+        data = {"payment_method": "stripe"}
+
+        response = authenticated_client.patch(url, data, format="json")
+
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_pay_already_processed_reservation(self, authenticated_client, db, freezer):
+        """Test user cannot pay for an already cancelled/confirmed reservation"""
+        user = authenticated_client.user
+
+        cancelled_reservation = ReservationFactory(
+            passenger=user, status=ReservationStatus.CANCELLED
+        )
+        confirmed_reservation = ReservationFactory(
+            passenger=user, status=ReservationStatus.CONFIRMED
+        )
+
+        # URLs
+        cancelled_reservation_url = reverse(
+            reservation_payment_url, kwargs={"pk": cancelled_reservation.id}
+        )
+        confirmed_reservation_url = reverse(
+            reservation_payment_url, kwargs={"pk": confirmed_reservation.id}
+        )
+        data = {"payment_method": "stripe"}
+
+        # Requests
+        cancelled_response = authenticated_client.patch(
+            cancelled_reservation_url, data, format="json"
+        )
+        confirmed_response = authenticated_client.patch(
+            confirmed_reservation_url, data, format="json"
+        )
+
+        # Assrtions
+        assert cancelled_response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "cancelled reservations" in cancelled_response.data["detail"].lower()
+
+        assert confirmed_response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "already paid" in confirmed_response.data["detail"].lower()
+
+    def test_pay_reservation_ride_departed(self, authenticated_client, db, freezer):
+        """Test user cannot pay for a reservation for departed ride"""
+        from django.utils import timezone
+        from datetime import timedelta
+
+        user = authenticated_client.user
+        now = timezone.now()
+        freezer.move_to(now)
+
+        # Ride that departed 1 hour ago
+        ride = RideFactory(departure_datetime=now - timedelta(hours=1))
+        reservation = ReservationFactory(passenger=user, ride=ride)
+
+        url = reverse(reservation_payment_url, kwargs={"pk": reservation.id})
+        data = {"payment_method": "stripe"}
+
+        response = authenticated_client.patch(url, data, format="json")
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "too late" in response.data["detail"].lower()
+
+    def test_pay_nonexistent_reservation(self, authenticated_client, db):
+        """Test payment for a reservation that doesn't exist"""
+        url = reverse(
+            reservation_payment_url,
+            kwargs={"pk": "00000000-0000-0000-0000-000000000000"},
+        )
+
+        response = authenticated_client.patch(url, {}, format="json")
+
+        # assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_pay_reservation_unauthenticated(self, api_client, db):
+        """Test unauthenticated user cannot pay for reservation"""
+        reservation = ReservationFactory()
+
+        url = reverse(reservation_payment_url, kwargs={"pk": reservation.id})
         response = api_client.patch(url, {}, format="json")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED

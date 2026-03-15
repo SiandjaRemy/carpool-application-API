@@ -70,6 +70,8 @@ class TestCompleteBookingFlow:
         )
         accept_response = api_client.post(accept_url)
 
+        print("#####################")
+        print(f"Response is: {accept_response.data}")
         assert accept_response.status_code == status.HTTP_200_OK
 
         # 4. Verify reservation was created

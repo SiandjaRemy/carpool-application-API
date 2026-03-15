@@ -70,6 +70,8 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.AllowAny",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    # My custom exception handler
+    "EXCEPTION_HANDLER": "carpool.exceptions.custom_exception_handler",
 }
 
 SIMPLE_JWT = {
