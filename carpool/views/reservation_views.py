@@ -87,29 +87,15 @@ class ReservationModelViewet(viewsets.ModelViewSet):
 
         serializer.is_valid(raise_exception=True)
 
-        try:
-            result = serializer.save()
+        result = serializer.save()
 
-            return Response(
-                {
-                    "detail": result["detail"],
-                    "reservation_status": result["reservation"].status,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        except ValueError as e:
-            # Handle validation errors (400)
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except PermissionError as e:
-            # Handle permission errors (403)
-            return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
-        except Exception as e:
-            # Handle unexpected errors (500)
-            return Response(
-                {"detail": f"An unexpected error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        return Response(
+            {
+                "detail": result["detail"],
+                "reservation_status": result["reservation"].status,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(
         methods=["PATCH"],
@@ -132,26 +118,12 @@ class ReservationModelViewet(viewsets.ModelViewSet):
 
         serializer.is_valid(raise_exception=True)
 
-        try:
-            result = serializer.save()
+        result = serializer.save()
 
-            return Response(
-                {
-                    "detail": result["detail"],
-                    "reservation_status": result["reservation"].status,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        except ValueError as e:
-            # Handle validation errors (400)
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except PermissionError as e:
-            # Handle permission errors (403)
-            return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
-        except Exception as e:
-            # Handle unexpected errors (500)
-            return Response(
-                {"detail": f"An unexpected error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        return Response(
+            {
+                "detail": result["detail"],
+                "reservation_status": result["reservation"].status,
+            },
+            status=status.HTTP_200_OK,
+        )

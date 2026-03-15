@@ -59,14 +59,8 @@ class RideAlertModelViewset(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def toggle_active(self, request, pk=None):
-        if not pk:
-            raise ValidationError({"error": "pk is required"})
         user = self.request.user
-        try:
-            alert = RideAlertService.toggle_alert(alert_id=pk, user=user)
-            alert_status = "Active" if alert.is_active else "Inactive"
-            data = {"message": f"Alert is now {alert_status}"}
-            return Response(data, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            raise ValidationError({"error": str(e)})
+        alert = RideAlertService.toggle_alert(alert_id=pk, user=user)
+        alert_status = "Active" if alert.is_active else "Inactive"
+        data = {"message": f"Alert is now {alert_status}"}
+        return Response(data, status=status.HTTP_200_OK)
