@@ -5,6 +5,9 @@ from carpool.services.request_service import RideRequestService
 from carpool.tests.factories import RideFactory, RideRequestFactory, UserFactory
 
 
+pytestmark = pytest.mark.database
+
+
 @pytest.mark.django_db(transaction=True)
 def test_concurrent_booking_race_condition():
     """Test that the owner cannot accept two requests if only one seat remains"""
