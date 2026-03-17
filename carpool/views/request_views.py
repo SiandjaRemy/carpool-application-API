@@ -105,7 +105,7 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
         return Response(data, status=status.HTTP_200_OK)
 
     @action(
-        methods=["POST"],
+        methods=["PATCH"],
         detail=True,
         url_path="accept",
         url_name="accept",
@@ -138,7 +138,7 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
         )
 
     @action(
-        methods=["POST"],
+        methods=["PATCH"],
         detail=True,
         url_path="reject",
         url_name="reject",
@@ -171,7 +171,7 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
         )
 
     @action(
-        methods=["POST"],
+        methods=["PATCH"],
         detail=True,
         url_path="cancel",
         url_name="cancel",

@@ -35,10 +35,10 @@ reservation_cancel_url = "carpool:reservations-cancel"
 
 
 @pytest.mark.django_db
-class TestCompleteBookingFlow:
-    """Test complete booking flow from ride creation to reservation payment"""
+class TestCancelBookingFlow:
+    """Test reservation cancel flow from ride creation to reservation cancelation"""
 
-    def test_happy_booking_flow(self, authenticated_client, passenger_client, db):
+    def test_happy_cancel_flow(self, authenticated_client, passenger_client, db):
         """Test the entire happy booking process"""
 
         # 1. Driver creates a ride.
@@ -106,15 +106,13 @@ class TestCompleteBookingFlow:
         assert reservation_obj["passenger"]["id"] == str(passenger.id)
         assert ride_str in reservation_obj["ride"]
 
-        # 8. Trigger payment for the ride
-        # Note that payment_method is required
-        payment_data = {"payment_method": "stripe"}
-        payment_url = reverse(
-            reservation_payment_url, kwargs={"pk": str(reservation_obj["id"])}
+        # 8. Trigger cancelation for this reservation
+        cancel_url = reverse(
+            reservation_cancel_url, kwargs={"pk": str(reservation_obj["id"])}
         )
-        payment_response = passenger_client.patch(payment_url, payment_data)
+        cancel_response = passenger_client.patch(cancel_url)
 
-        assert payment_response.status_code == status.HTTP_200_OK
+        assert cancel_response.status_code == status.HTTP_200_OK
 
         # 9. Check that the ride was updated
         detail_url = reverse(
@@ -123,5 +121,8 @@ class TestCompleteBookingFlow:
         detail_response = passenger_client.get(detail_url)
 
         assert detail_response.status_code == status.HTTP_200_OK
-        assert detail_response.data["payment_status"] == ReservationPaymentStatus.PAID
-        assert detail_response.data["status"] == ReservationStatus.CONFIRMED
+        assert (
+            detail_response.data["payment_status"]
+            == ReservationPaymentStatus.PAYMENT_DISABLED
+        )
+        assert detail_response.data["status"] == ReservationStatus.CANCELLED

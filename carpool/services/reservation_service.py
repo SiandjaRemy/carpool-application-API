@@ -154,7 +154,7 @@ class ReservationService:
             reservation.status = ReservationStatus.CANCELLED
         elif reservation.payment_status == ReservationPaymentStatus.PAID:
             # Trigger refund logic
-            reservation.payment_status = ReservationPaymentStatus.PAYMENT_DISABLED
+            reservation.payment_status = ReservationPaymentStatus.REFUNDED
             reservation.status = ReservationStatus.CANCELLED
 
         reservation.save(update_fields=["status", "payment_status", "updated_at"])

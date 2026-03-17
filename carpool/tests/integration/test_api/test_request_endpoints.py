@@ -271,7 +271,7 @@ class TestRideRequestEndpoints:
             ride_request_accept_url,
             kwargs={"rides_pk": ride.id, "pk": ride_request.id},
         )
-        response = authenticated_client.post(url)
+        response = authenticated_client.patch(url)
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -300,7 +300,7 @@ class TestRideRequestEndpoints:
             ride_request_accept_url,
             kwargs={"rides_pk": ride.id, "pk": ride_request.id},
         )
-        response = authenticated_client.post(url)
+        response = authenticated_client.patch(url)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -317,7 +317,7 @@ class TestRideRequestEndpoints:
             ride_request_accept_url,
             kwargs={"rides_pk": ride.id, "pk": ride_request.id},
         )
-        response = authenticated_client.post(url)
+        response = authenticated_client.patch(url)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -332,7 +332,7 @@ class TestRideRequestEndpoints:
             ride_request_reject_url,
             kwargs={"rides_pk": ride.id, "pk": ride_request.id},
         )
-        response = authenticated_client.post(url)
+        response = authenticated_client.patch(url)
 
         assert response.status_code == status.HTTP_200_OK
         ride_request.refresh_from_db()
@@ -349,7 +349,7 @@ class TestRideRequestEndpoints:
             ride_request_cancel_url,
             kwargs={"rides_pk": ride.id, "pk": ride_request.id},
         )
-        response = authenticated_client.post(url)
+        response = authenticated_client.patch(url)
 
         assert response.status_code == status.HTTP_200_OK
         ride_request.refresh_from_db()

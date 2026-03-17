@@ -172,6 +172,7 @@ class TestReservationEndpoints:
 
         # Create a ride departing in 3 hours
         ride = RideFactory(departure_datetime=now + timedelta(hours=3))
+        # Create a paid reservation for that ride
         reservation = ReservationFactory(
             passenger=user,
             ride=ride,
@@ -192,7 +193,7 @@ class TestReservationEndpoints:
         # Verify reservation was updated
         reservation.refresh_from_db()
         assert reservation.status == ReservationStatus.CANCELLED
-        assert reservation.payment_status == ReservationPaymentStatus.PAYMENT_DISABLED
+        assert reservation.payment_status == ReservationPaymentStatus.REFUNDED
 
         # Verify seats were returned to the ride
         ride.refresh_from_db()

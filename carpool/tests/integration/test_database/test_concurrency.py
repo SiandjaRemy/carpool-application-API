@@ -17,6 +17,7 @@ def test_concurrent_booking_race_condition():
 
     req1 = RideRequestFactory(ride=ride, seats_requested=1)
     req2 = RideRequestFactory(ride=ride, seats_requested=1)
+    req3 = RideRequestFactory(ride=ride, seats_requested=1)
 
     results = []
     errors = []
@@ -27,10 +28,11 @@ def test_concurrent_booking_race_condition():
         return RideRequestService.accept_request(request_id, ride_owner)
 
     # 3. Execute concurrently
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         futures = [
             executor.submit(attempt_acceptance, req1.id),
             executor.submit(attempt_acceptance, req2.id),
+            executor.submit(attempt_acceptance, req3.id),
         ]
 
         for future in concurrent.futures.as_completed(futures):
@@ -48,6 +50,6 @@ def test_concurrent_booking_race_condition():
     assert ride.available_seats == 0
     # One succeeded, one failed with the ValueError from your service
     assert len(results) == 1
-    assert len(errors) == 1
+    assert len(errors) == 2
     # assert "not enough seats" in str(errors[0]).lower()
     assert "table is locked" in str(errors[0]).lower()

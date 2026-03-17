@@ -35,10 +35,10 @@ reservation_cancel_url = "carpool:reservations-cancel"
 
 
 @pytest.mark.django_db
-class TestCompleteBookingFlow:
-    """Test complete booking flow from ride creation to reservation payment"""
+class TestRefundBookingFlow:
+    """Test refund booking flow from ride creation to refundment for paid reservation"""
 
-    def test_happy_booking_flow(self, authenticated_client, passenger_client, db):
+    def test_happy_refund_flow(self, authenticated_client, passenger_client, db):
         """Test the entire happy booking process"""
 
         # 1. Driver creates a ride.
@@ -125,3 +125,24 @@ class TestCompleteBookingFlow:
         assert detail_response.status_code == status.HTTP_200_OK
         assert detail_response.data["payment_status"] == ReservationPaymentStatus.PAID
         assert detail_response.data["status"] == ReservationStatus.CONFIRMED
+
+        # 10. Trigger cancelation for this reservation
+        # Cancelation for a paid reservation will update ReservationPaymentStatus from paid to refunded
+        cancel_url = reverse(
+            reservation_cancel_url, kwargs={"pk": str(reservation_obj["id"])}
+        )
+        cancel_response = passenger_client.patch(cancel_url)
+
+        assert cancel_response.status_code == status.HTTP_200_OK
+
+        # 11. Check that the ride was updated
+        detail_url = reverse(
+            reservations_detail_url, kwargs={"pk": str(reservation_obj["id"])}
+        )
+        detail_response = passenger_client.get(detail_url)
+
+        assert detail_response.status_code == status.HTTP_200_OK
+        assert (
+            detail_response.data["payment_status"] == ReservationPaymentStatus.REFUNDED
+        )
+        assert detail_response.data["status"] == ReservationStatus.CANCELLED
