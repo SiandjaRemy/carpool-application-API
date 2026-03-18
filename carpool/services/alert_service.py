@@ -12,47 +12,66 @@ class RideAlertService:
     """Service layer for ride alert business logic"""
 
     @staticmethod
-    def _validate_alert_dates(before_date, after_date) -> None:
+    def _validate_alert_dates(alert_data) -> None:
         """Validate that dates are logical"""
-        if before_date < after_date:
-            raise ValueError("Before date must be after after date")
+        # Only validate if both dates are provided
+        if alert_data.get("before_date") and alert_data.get("after_date"):
+            if alert_data["before_date"] <= alert_data["after_date"]:
+                raise ValueError("Before date must be after after date")
+        else:
+            raise ValueError("Both dates are required for alert creation")
 
-        if before_date <= timezone.now():
+        # Validate future dates if provided
+        if (
+            alert_data.get("before_date")
+            and alert_data["before_date"] <= timezone.now()
+        ):
             raise ValueError("Before date must be in the future")
 
-        if after_date <= timezone.now():
+        if alert_data.get("after_date") and alert_data["after_date"] <= timezone.now():
             raise ValueError("After date must be in the future")
+
+    @staticmethod
+    def _validate_alert_dates_update(update_data, instance) -> None:
+        """Validate that updated dates are logical"""
+        # Validate if both dates are provided
+        if update_data.get("before_date") and update_data.get("after_date"):
+            if update_data["before_date"] <= update_data["after_date"]:
+                raise ValueError("Before date must be after after date")
+        elif update_data.get("before_date") and not update_data.get("after_date"):
+            if update_data["before_date"] <= instance.after_date:
+                raise ValueError("Before date must be after after date")
+        elif update_data.get("after_date") and not update_data.get("before_date"):
+            if update_data["after_date"] <= timezone.now():
+                raise ValueError("After date must be in the future")
+            if instance.before_date <= update_data["after_date"]:
+                raise ValueError("Before date must be after after date")
 
     @classmethod
     @transaction.atomic
-    def create_alert(cls, user, departure_town, arrival_town, before_date, after_date):
+    def create_alert(cls, user, alert_data):
         """
         Create a new ride alert for a user
         """
         # Validate dates
-        cls._validate_alert_dates(before_date, after_date)
+        cls._validate_alert_dates(alert_data)
 
         # Check for duplicate active alerts
         existing_alert = RideAlert.objects.filter(
             user=user,
-            departure_town__iexact=departure_town,
-            arrival_town__iexact=arrival_town,
+            departure_town__iexact=alert_data["departure_town"],
+            arrival_town__iexact=alert_data["arrival_town"],
             is_active=True,
         ).first()
 
         if existing_alert:
             raise ValueError(
-                f"You already have an active alert for {departure_town} → {arrival_town}"
+                f"You already have an active alert for {alert_data['departure_town']} → {alert_data['arrival_town']}"
             )
 
+        alert_data["user"] = user
         # Create alert
-        alert = RideAlert.objects.create(
-            user=user,
-            departure_town=departure_town,
-            arrival_town=arrival_town,
-            before_date=before_date,
-            after_date=after_date,
-        )
+        alert = RideAlert.objects.create(**alert_data)
 
         # Immediately check for matching rides
         cls._check_alert_matches(alert)
@@ -61,32 +80,26 @@ class RideAlertService:
 
     @classmethod
     @transaction.atomic
-    def update_alert(cls, alert_id: uuid.UUID, user, **kwargs):
+    def update_alert(cls, update_data, instance, user):
         """
-        Update an existing alert
+        Update an existing alert request
         """
-        try:
-            alert = RideAlert.objects.select_for_update().get(id=alert_id, user=user)
-        except RideAlert.DoesNotExist:
+        # Might replace this with a query using selectfor update depending on performance
+        if instance.user != user:
             raise ValueError("Alert not found or you don't have permission")
 
         # Validate dates if they're being updated
-        before_date = kwargs.get("before_date", alert.before_date)
-        after_date = kwargs.get("after_date", alert.after_date)
-        cls._validate_alert_dates(before_date, after_date)
+        # This about mor complex scenarios, one date only is updated
+        if update_data.get("before_date") or update_data.get("after_date"):
+            cls._validate_alert_dates_update(update_data, instance)
 
         # Update fields
-        for field, value in kwargs.items():
-            if hasattr(alert, field):
-                setattr(alert, field, value)
+        for field, value in update_data.items():
+            setattr(instance, field, value)
 
-        alert.save(update_fields=list(kwargs.keys()) + ["updated_at"])
+        instance.save(update_fields=list(update_data.keys()) + ["updated_at"])
 
-        # Check matches if route changed
-        if "departure_town" in kwargs or "arrival_town" in kwargs:
-            cls._check_alert_matches(alert)
-
-        return alert
+        return instance
 
     @classmethod
     @transaction.atomic
@@ -115,7 +128,6 @@ class RideAlertService:
             status=RideStatus.SCHEDULED,
             departure_datetime__gte=timezone.now(),
             available_seats__gt=0,
-            is_active=True,
         )
 
         # Apply date filters
@@ -136,6 +148,7 @@ class RideAlertService:
             departure_town__iexact=ride.departure_town,
             arrival_town__iexact=ride.arrival_town,
             is_active=True,
+            # Add dates to the filter
         )
 
         # Filter by date if alerts have date constraints

@@ -116,8 +116,8 @@ class RideAlertFactory(DjangoModelFactory):
         skip_postgeneration_save = True
 
     user = factory.SubFactory(UserFactory)
-    origin = factory.Faker("city")
-    destination = factory.Faker("city")
-    date_from = factory.LazyFunction(lambda: timezone.now().date())
-    date_to = factory.LazyFunction(lambda: timezone.now().date() + timedelta(days=7))
+    departure_town = factory.Faker("city")
+    arrival_town = factory.Faker("city")
+    before_date = factory.LazyFunction(lambda: timezone.now() + timedelta(days=7))
+    after_date = factory.LazyFunction(lambda: timezone.now() + timedelta(days=1))
     is_active = True

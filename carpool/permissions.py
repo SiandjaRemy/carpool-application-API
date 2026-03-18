@@ -77,3 +77,13 @@ class IsRequestPending(BasePermission):
         from carpool.enums.enums import RequestStatus
 
         return obj.status == RequestStatus.PENDING
+
+
+class IsAlertOwner(BasePermission):
+    """
+    Custom permission to only allow the user who created the alert to view and update it.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        # Check if the user is the passenger who made the request
+        return obj.user == request.user

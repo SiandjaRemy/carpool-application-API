@@ -2,18 +2,18 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 
 from carpool.paginators import CustomPageNumberPagination
-from carpool.permissions import IsCreator
+from carpool.permissions import IsAlertOwner
 
 from carpool.models.alert import RideAlert
 
-from carpool.serializers.alert_serializers import RideAlertModelSerializer
+from carpool.serializers.alert_serializers import (
+    RideAlertModelSerializer,
+    RideAlertUpdateModelSerializer,
+)
 from carpool.serializers.base_serializers import BlankSerializer
 
-
-from drf_yasg.utils import swagger_auto_schema
 
 from carpool.services.alert_service import RideAlertService
 
@@ -22,7 +22,7 @@ class RideAlertModelViewset(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "patch"]
     serializer_class = RideAlertModelSerializer
     pagination_class = CustomPageNumberPagination
-    permission_classes = [IsAuthenticated, IsCreator]
+    permission_classes = [IsAuthenticated, IsAlertOwner]
 
     def get_queryset(self):
         user = self.request.user
@@ -46,17 +46,17 @@ class RideAlertModelViewset(viewsets.ModelViewSet):
         return context
 
     def get_serializer_class(self):
-        if self.request.method == "POST":
-            return RideAlertModelSerializer
-        elif self.request.method == "GET":
-            return RideAlertModelSerializer
-        return BlankSerializer
+        if self.action == "toggle-active":
+            return BlankSerializer
+        elif self.action == "partial_update":
+            return RideAlertUpdateModelSerializer
+        return RideAlertModelSerializer
 
     @action(
         methods=["PATCH"],
         detail=True,
         url_path="toggle-active",
-        permission_classes=[IsAuthenticated],
+        permission_classes=[IsAuthenticated, IsAlertOwner],
     )
     def toggle_active(self, request, pk=None):
         user = self.request.user

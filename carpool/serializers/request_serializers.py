@@ -55,58 +55,6 @@ class RideRequestModelSerializer(serializers.ModelSerializer):
         return updated_request
 
 
-# class RideRequestUpdateModelSerializer(serializers.ModelSerializer):
-#     """Serializer for updating pending ride requests - only allowed fields are updatable"""
-
-#     class Meta:
-#         model = RideRequest
-#         fields = [
-#             "id",
-#             "seats_requested",
-#             "price_per_seat",
-#         ]
-#         read_only_fields = ["id"]
-
-#     def validate(self, attrs):
-#         if self.instance.status != RequestStatus.PENDING:
-#             raise serializers.ValidationError("This request cannot be updated.")
-#         return super().validate(attrs)
-
-#     def validate_seats_requested(self, value):
-#         """Validate seats are positive and within ride capacity"""
-#         if value <= 0:
-#             raise serializers.ValidationError("Seats requested must be positive.")
-
-#         # Check against ride's available seats
-#         if self.instance:
-#             ride = self.instance.ride
-#             current_seats = self.instance.seats_requested
-
-#             # If increasing seats, check availability
-#             if value > current_seats:
-#                 additional_seats = value - current_seats
-#                 if ride.available_seats < value:
-#                     raise serializers.ValidationError(
-#                         f"Cannot increase by {additional_seats}. Only {ride.available_seats} seats available."
-#                     )
-
-#         return value
-
-#     def validate_price_per_seat(self, value):
-#         """Ensure price is positive"""
-#         if value <= 0:
-#             raise serializers.ValidationError("Price per seat must be positive.")
-#         return value
-
-#     def update(self, instance, validated_data):
-#         # Update the request fields
-#         for attr, value in validated_data.items():
-#             setattr(instance, attr, value)
-
-#         instance.save()
-#         return instance
-
-
 class AcceptRideRequestSerializer(serializers.Serializer):
 
     def save(self, **kwargs):

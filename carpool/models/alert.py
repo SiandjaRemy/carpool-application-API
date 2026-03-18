@@ -20,6 +20,14 @@ class RideAlert(TimeStampedModel):
 
     is_active = models.BooleanField(default=True)
 
+    def __str__(self):
+        return super().__str__()
+
+    def __str__(self):
+        return (
+            f"Alert for {self.user} from {self.departure_town} to {self.arrival_town}"
+        )
+
     class Meta:
         indexes = [
             models.Index(fields=["departure_town", "arrival_town"]),
