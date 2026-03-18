@@ -61,14 +61,11 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-DEFAULT_VERSION = "v1"
+# Default version
+DEFAULT_VERSION = os.environ.get("DEFAULT_API_VERSION", "v1")
 
-ALLOWED_VERSIONS_ENV = os.getenv("ALLOWED_VERSIONS", "")
-if ALLOWED_VERSIONS_ENV:
-    ALLOWED_VERSIONS = [host.strip() for host in ALLOWED_VERSIONS_ENV.split(",")]
-else:
-    # Or raise an error to force configuration
-    raise ValueError("ALLOWED_VERSIONS environment variable is required in production")
+ALLOWED_VERSIONS_ENV = os.environ.get("ALLOWED_VERSIONS", "v1")
+ALLOWED_VERSIONS = [v.strip() for v in ALLOWED_VERSIONS_ENV.split(",") if v.strip()]
 
 
 REST_FRAMEWORK = {
