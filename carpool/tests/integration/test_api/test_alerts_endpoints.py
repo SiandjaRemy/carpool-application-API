@@ -1,4 +1,3 @@
-# carpool/tests/integration/test_api/test_alert_endpoints.py
 import pytest
 from django.urls import reverse
 from rest_framework import status
@@ -6,17 +5,15 @@ from django.utils import timezone
 from datetime import timedelta
 
 from carpool.tests.factories import (
-    UserFactory,
     RideAlertFactory,
-    RideFactory,
 )
 
 pytestmark = pytest.mark.integration
 
 # URL names
-alert_list_url = "carpool:alerts-list"
-alert_detail_url = "carpool:alerts-detail"
-alert_toggle_active_url = "carpool:alerts-toggle-active"
+alert_list_url = "v1:carpool:alerts-list"
+alert_detail_url = "v1:carpool:alerts-detail"
+alert_toggle_active_url = "v1:carpool:alerts-toggle-active"
 
 
 @pytest.mark.django_db

@@ -4,13 +4,15 @@ from rest_framework_nested import routers
 
 from carpool.views import alert_views, request_views, reservation_views, ride_views
 
-# Existing routers
+
+app_name = "carpool"
+
 router = routers.DefaultRouter()
 
 router.register("rides", ride_views.RideModelViewset, basename="rides")
 router.register("alerts", alert_views.RideAlertModelViewset, basename="alerts")
 router.register(
-    "reservations", reservation_views.ReservationModelViewet, basename="reservations"
+    "reservations", reservation_views.ReservationModelViewset, basename="reservations"
 )
 
 

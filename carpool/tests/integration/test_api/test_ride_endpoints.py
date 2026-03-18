@@ -14,7 +14,8 @@ pytestmark = pytest.mark.integration
 
 departure_datetime = timezone.now() + timedelta(days=1)
 
-base_url = "carpool:rides-list"
+base_url = "v1:carpool:rides-list"
+base_detail_url = "v1:carpool:rides-detail"
 
 
 class TestRideEndpoints:

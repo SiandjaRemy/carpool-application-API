@@ -22,12 +22,6 @@ schema_view = get_schema_view(
 )
 
 
-api_patterns = [
-    path("auth/", include(("accounts.urls", "accounts"), namespace="accounts")),
-    path("carpool/", include(("carpool.urls", "carpool"), namespace="carpool")),
-]
-
-
 urlpatterns = [
     # swagger
     re_path(
@@ -44,8 +38,8 @@ urlpatterns = [
         r"^redoc/$", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"
     ),
     path("admin/", admin.site.urls),
-    path("api/", include(api_patterns)),
-    # path("api/", include(api_patterns)),
+    # API versioning
+    path("api/v1/", include("v1.urls", namespace="v1")),
 ]
 
 # ONLY include debug toolbar urls if it's actually in INSTALLED_APPS

@@ -11,10 +11,10 @@ from carpool.tests.factories import (
 pytestmark = pytest.mark.integration
 
 # URL names
-reservation_list_url = "carpool:reservations-list"
-reservation_detail_url = "carpool:reservations-detail"
-reservation_cancel_url = "carpool:reservations-cancel"
-reservation_payment_url = "carpool:reservations-payment"
+reservation_list_url = "v1:carpool:reservations-list"
+reservation_detail_url = "v1:carpool:reservations-detail"
+reservation_cancel_url = "v1:carpool:reservations-cancel"
+reservation_payment_url = "v1:carpool:reservations-payment"
 
 
 @pytest.mark.django_db

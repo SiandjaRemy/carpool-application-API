@@ -13,25 +13,25 @@ pytestmark = pytest.mark.integration
 
 departure_datetime = timezone.now() + timedelta(days=2)
 
-base_ride_url = "carpool:rides-list"
-base_ride_detail_url = "carpool:rides-detail"
+base_ride_url = "v1:carpool:rides-list"
+base_ride_detail_url = "v1:carpool:rides-detail"
 
-ride_request_list_url = "carpool:requests-list"
-ride_request_detail_url = "carpool:requests-detail"
+ride_request_list_url = "v1:carpool:requests-list"
+ride_request_detail_url = "v1:carpool:requests-detail"
 
-ride_request_accept_url = "carpool:requests-accept"
-ride_request_reject_url = "carpool:requests-reject"
-ride_request_cancel_url = "carpool:requests-cancel"
+ride_request_accept_url = "v1:carpool:requests-accept"
+ride_request_reject_url = "v1:carpool:requests-reject"
+ride_request_cancel_url = "v1:carpool:requests-cancel"
 
-ride_request_my_request_url = "carpool:requests-my-request"
-ride_request_toggle_active_url = "carpool:requests-toggle-active"
+ride_request_my_request_url = "v1:carpool:requests-my-request"
+ride_request_toggle_active_url = "v1:carpool:requests-toggle-active"
 
 # Reservations
 
-reservations_list_url = "carpool:reservations-list"
-reservations_detail_url = "carpool:reservations-detail"
-reservation_payment_url = "carpool:reservations-payment"
-reservation_cancel_url = "carpool:reservations-cancel"
+reservations_list_url = "v1:carpool:reservations-list"
+reservations_detail_url = "v1:carpool:reservations-detail"
+reservation_payment_url = "v1:carpool:reservations-payment"
+reservation_cancel_url = "v1:carpool:reservations-cancel"
 
 
 @pytest.mark.django_db

@@ -13,14 +13,14 @@ from carpool.tests.factories import (
 pytestmark = pytest.mark.integration
 
 
-ride_request_list_url = "carpool:requests-list"
-ride_request_detail_url = "carpool:requests-detail"
+ride_request_list_url = "v1:carpool:requests-list"
+ride_request_detail_url = "v1:carpool:requests-detail"
 
-ride_request_accept_url = "carpool:requests-accept"
-ride_request_reject_url = "carpool:requests-reject"
-ride_request_cancel_url = "carpool:requests-cancel"
-ride_request_my_request_url = "carpool:requests-my-request"
-ride_request_toggle_active_url = "carpool:requests-toggle-active"
+ride_request_accept_url = "v1:carpool:requests-accept"
+ride_request_reject_url = "v1:carpool:requests-reject"
+ride_request_cancel_url = "v1:carpool:requests-cancel"
+ride_request_my_request_url = "v1:carpool:requests-my-request"
+ride_request_toggle_active_url = "v1:carpool:requests-toggle-active"
 
 
 @pytest.mark.django_db
