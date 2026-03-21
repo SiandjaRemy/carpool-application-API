@@ -2,6 +2,7 @@ import pytest
 
 from datetime import timedelta
 
+from django.core.cache import cache
 from django.urls import reverse
 from django.utils import timezone
 
@@ -135,14 +136,17 @@ class TestRefundBookingFlow:
 
         assert cancel_response.status_code == status.HTTP_200_OK
 
-        # 11. Check that the ride was updated
-        detail_url = reverse(
+        # Clear the cache so the next GET hits the DB
+        cache.clear()
+
+        # 11. Check that the ride was updated again
+        detail_url2 = reverse(
             reservations_detail_url, kwargs={"pk": str(reservation_obj["id"])}
         )
-        detail_response = passenger_client.get(detail_url)
+        detail_response2 = passenger_client.get(detail_url2)
 
-        assert detail_response.status_code == status.HTTP_200_OK
+        assert detail_response2.status_code == status.HTTP_200_OK
         assert (
-            detail_response.data["payment_status"] == ReservationPaymentStatus.REFUNDED
+            detail_response2.data["payment_status"] == ReservationPaymentStatus.REFUNDED
         )
-        assert detail_response.data["status"] == ReservationStatus.CANCELLED
+        assert detail_response2.data["status"] == ReservationStatus.CANCELLED

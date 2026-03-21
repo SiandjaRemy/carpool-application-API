@@ -1,6 +1,8 @@
 from django.db import IntegrityError
 from django.core.exceptions import ObjectDoesNotExist
 
+from django.urls import NoReverseMatch
+from rest_framework.exceptions import Throttled
 from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework import status
@@ -17,7 +19,18 @@ def custom_exception_handler(exc, context):
     if response is None:
         # ValueErrors from service become 400 Bad Request
 
-        if isinstance(exc, ValueError):
+        if isinstance(exc, Throttled):
+            wait_seconds = int(exc.wait)
+            # Custom message with the exact wait time
+            detail = f"Too many attempts. Please try again in {wait_seconds} seconds."
+            return Response(
+                {"detail": str(detail)}, status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+
+        elif isinstance(exc, NoReverseMatch):
+            return Response({"detail": str(exc)}, status=status.HTTP_404_NOT_FOUND)
+
+        elif isinstance(exc, ValueError):
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         # PermissionError becomes 403 Forbidden

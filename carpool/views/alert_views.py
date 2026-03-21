@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 
+from carpool.caching import CacheMixin
+from carpool.mixins import UUIDValidationMixin
 from carpool.paginators import CustomPageNumberPagination
 from carpool.permissions import IsAlertOwner
 
@@ -18,11 +20,13 @@ from carpool.serializers.base_serializers import BlankSerializer
 from carpool.services.alert_service import RideAlertService
 
 
-class RideAlertModelViewset(viewsets.ModelViewSet):
+class RideAlertModelViewset(CacheMixin, viewsets.ModelViewSet, UUIDValidationMixin):
     http_method_names = ["get", "post", "patch"]
     serializer_class = RideAlertModelSerializer
     pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthenticated, IsAlertOwner]
+
+    cache_timeout = 300
 
     def get_queryset(self):
         user = self.request.user

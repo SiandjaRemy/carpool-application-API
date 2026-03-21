@@ -6,6 +6,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import MethodNotAllowed
 
+from carpool.caching import CacheMixin
+from carpool.mixins import UUIDValidationMixin
 from carpool.paginators import CustomPageNumberPagination
 
 from carpool.models.reservation import Reservation
@@ -17,10 +19,12 @@ from carpool.serializers.reservation_serializers import (
 )
 
 
-class ReservationModelViewset(viewsets.ModelViewSet):
+class ReservationModelViewset(CacheMixin, viewsets.ModelViewSet, UUIDValidationMixin):
     http_method_names = ["get", "patch"]
     pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthenticated]
+
+    cache_timeout = 300
 
     def get_queryset(self):
         user = self.request.user

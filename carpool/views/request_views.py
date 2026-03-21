@@ -5,6 +5,8 @@ from rest_framework.decorators import action
 
 from django.db.models import Q
 
+from carpool.caching import CacheMixin, cache_user_action
+from carpool.mixins import UUIDValidationMixin
 from carpool.paginators import CustomPageNumberPagination
 from carpool.permissions import (
     IsRequestOwner,
@@ -25,10 +27,12 @@ from carpool.serializers.request_serializers import (
 from carpool.services.request_service import RideRequestService
 
 
-class RideRequestModelViewset(viewsets.ModelViewSet):
+class RideRequestModelViewset(CacheMixin, viewsets.ModelViewSet, UUIDValidationMixin):
     http_method_names = ["get", "post", "patch"]
     pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthenticated, IsRequestOwnerOrReadOnly]
+
+    cache_timeout = 300
 
     def get_queryset(self):
         user = self.request.user
@@ -68,6 +72,7 @@ class RideRequestModelViewset(viewsets.ModelViewSet):
     def get_exception_handler(self):
         return super().get_exception_handler()
 
+    @cache_user_action(timeout=60 * 5)  # Caches custom action for 60 seconds
     @action(
         methods=["GET"],
         detail=False,

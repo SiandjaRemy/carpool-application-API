@@ -52,12 +52,29 @@ class TestRideRequestEndpoints:
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_list_requests_for_nonexistent_ride(self, authenticated_client, db):
+    def test_list_requests_with_invalid_uuid_format(self, authenticated_client, db):
+        """Test that only uuid format is accepted for ids in urls"""
+        # We bypass reverse() because reverse() validates the UUID format before
+        # the request even hits the 'client'
+        invalid_url = "/api/v1/carpool/rides/invalid-uuid/requests/"
+
+        response = authenticated_client.get(invalid_url)
+
+        # Django will return 404 because "invalid-uuid"
+        # doesn't match the <uuid:rides_pk> pattern in urls.py
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_list_requests_with_valid_uuid_format_but_nonexistent(
+        self, authenticated_client, db
+    ):
         """Test listing requests for a ride that doesn't exist"""
-        url = reverse(ride_request_list_url, kwargs={"rides_pk": 99999})
+        url = reverse(
+            ride_request_list_url,
+            kwargs={"rides_pk": "00000000-0000-0000-0000-000000000000"},
+        )
         response = authenticated_client.get(url)
 
-        # assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 0
 
     # ----------------------------------------------------------------------
@@ -386,9 +403,6 @@ class TestRideRequestEndpoints:
 
         url = reverse(ride_request_my_request_url, kwargs={"rides_pk": ride.id})
         response = authenticated_client.get(url)
-
-        print("##########################################")
-        print(f"DATA - {response.data}")
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data == {}

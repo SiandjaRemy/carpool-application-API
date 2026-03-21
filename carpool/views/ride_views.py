@@ -5,7 +5,9 @@ from rest_framework.decorators import action
 
 from django.utils import timezone
 
+from carpool.caching import CacheMixin
 from carpool.enums.enums import RideStatus
+from carpool.mixins import UUIDValidationMixin
 from carpool.paginators import CustomPageNumberPagination
 from carpool.permissions import IsCreatorOrReadOnly
 
@@ -18,10 +20,12 @@ from carpool.serializers.ride_serializers import (
 )
 
 
-class RideModelViewset(viewsets.ModelViewSet):
+class RideModelViewset(CacheMixin, viewsets.ModelViewSet, UUIDValidationMixin):
     http_method_names = ["get", "post", "patch"]
     pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthenticatedOrReadOnly, IsCreatorOrReadOnly]
+
+    cache_timeout = 300
 
     def get_queryset(self):
         current_time = timezone.now()

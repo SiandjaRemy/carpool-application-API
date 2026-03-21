@@ -156,9 +156,9 @@ class RideRequestService:
         cls._validate_request_modification(request, user, ["owner"])
 
         # Extra Validation
-        if request.seats_requested > request.ride.available_seats:
+        if request.seats_requested > ride.available_seats:
             raise ValueError(
-                f"Not enough seats. Only {request.ride.available_seats} available."
+                f"Not enough seats. Only {ride.available_seats} available."
             )
 
         # Business logic

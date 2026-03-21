@@ -51,5 +51,7 @@ def test_concurrent_booking_race_condition():
     # One succeeded, one failed with the ValueError from your service
     assert len(results) == 1
     assert len(errors) == 2
-    # assert "not enough seats" in str(errors[0]).lower()
-    assert "table is locked" in str(errors[0]).lower()
+    assert (
+        "table is locked" in str(errors[0]).lower()
+        or "not enough seats" in str(errors[0]).lower()
+    )

@@ -146,6 +146,8 @@ CACHES = {
 }
 
 
+CACHE_TTL = 60 * 15  # Cache time to live set to 15 minutes
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
