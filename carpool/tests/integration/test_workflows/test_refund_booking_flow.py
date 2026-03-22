@@ -136,7 +136,7 @@ class TestRefundBookingFlow:
 
         assert cancel_response.status_code == status.HTTP_200_OK
 
-        # Clear the cache so the next GET hits the DB
+        # NEW: Clear the cache so the next GET hits the DB
         cache.clear()
 
         # 11. Check that the ride was updated again

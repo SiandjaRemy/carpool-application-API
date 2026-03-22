@@ -60,7 +60,9 @@ def invalidate_ride_reservations_cache(sender, instance, **kwargs):
     ReservationModelViewset.invalidate_list_cache()
 
     # 2. Clear the specific item retrieve cache
-    ReservationModelViewset.invalidate_retrieve_cache(pk=instance.pk)
+    ReservationModelViewset.invalidate_retrieve_cache(
+        pk=instance.pk, user_id=instance.passenger.id
+    )
 
 
 @receiver([post_save, post_delete], sender=RideAlert)
