@@ -1,22 +1,24 @@
+from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, generics
 
-from rest_framework_simplejwt.tokens import (
-    RefreshToken,
-)
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
-from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.conf import settings
 from django.db import transaction
 
 
+import requests
+
+
 from accounts.serializers import (
+    GoogleAuthSerializer,
     LogoutSerializer,
     PasswordChangeSerializer,
     PasswordResetConfirmSerializer,
@@ -24,10 +26,29 @@ from accounts.serializers import (
     UserCreateSerializer,
     UserDataSerializer,
 )
+from accounts.services.google_auth_service import GoogleAuthService
 from accounts.tasks import email_user
 
 
 User = get_user_model()
+
+
+class GoogleAuthView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = GoogleAuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            result = GoogleAuthService.authenticate(
+                code=serializer.validated_data["code"],
+                redirect_uri=serializer.validated_data["redirect_uri"],
+            )
+            return Response(result, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserView(generics.RetrieveUpdateAPIView):
@@ -187,3 +208,11 @@ class LogoutView(APIView):
             )
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+def google_auth_test(request):
+    context = {
+        "google_client_id": settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
+        "google_auth_endpoint": "/api/v1/auth/google/",
+    }
+    return render(request, "accounts/test_google_auth.html", context)

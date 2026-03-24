@@ -79,6 +79,16 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
 
 # CORS
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8081",
-    "http://127.0.0.1:8081",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
+
+# When using PostgreSQL, it’s recommended to use the built-in JSONB field
+# to store the extracted extra_data. To enable it define the setting:
+SOCIAL_AUTH_JSONFIELD_ENABLED = True
+
+
+from Carpool_System.logging import LOGGING
+import logging.config
+
+logging.config.dictConfig(LOGGING)

@@ -66,8 +66,20 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
 
 # CORS
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8081",
-    "http://127.0.0.1:8081",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 INTERNAL_IPS = ["127.0.0.1"]
+
+# Database considerations: SQLite has field length limitations that can cause issues.
+# For production, use PostgreSQL or MySQL. If using MySQL InnoDB or SQLite, add:
+SOCIAL_AUTH_UID_LENGTH = 223
+
+
+from Carpool_System.logging import LOGGING
+import logging.config
+
+logging.config.dictConfig(LOGGING)

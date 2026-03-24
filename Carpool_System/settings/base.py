@@ -23,7 +23,6 @@ print("✅ Loaded Django settings module:", os.environ.get("DJANGO_SETTINGS_MODU
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -42,7 +41,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_celery_beat",
     "django_celery_results",
+    "corsheaders",
 ]
+
 
 PROJECT_APPS = [
     "accounts",
@@ -51,7 +52,9 @@ PROJECT_APPS = [
 
 INSTALLED_APPS += PROJECT_APPS
 
+
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",  # MUST BE AT THE TOP!
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -109,6 +112,18 @@ DJOSER = {
         "current_user": "accounts.serializers.UserDataSerializer",
     },
 }
+
+
+# Authentication Backends
+# Tell Django to use Google alongside standard Email/Password
+AUTHENTICATION_BACKENDS = (
+    "social_core.backends.google.GoogleOAuth2",
+    "django.contrib.auth.backends.ModelBackend",
+)
+
+# Google Social Auth Credentials
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("GOOGLE_CLIENT_ID")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 
 # Setting for the expiratory time of the password reset token
 # PASSWORD_RESET_TIMEOUT = 60 * 5 # 5 minutes
@@ -172,8 +187,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-# TIME_ZONE = "UTC"
-TIME_ZONE = "Africa/Douala"
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -208,12 +222,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.User"
 
-
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
-
 FRONTEND_URL = os.environ.get("FRONTEND_URL")
+CALLBACK_URL = os.environ.get("CALLBACK_URL")
 
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
@@ -224,9 +234,3 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 # Celery backend results
 result_backend = "django-db"
 broker_connection_retry_on_startup = True
-
-
-from Carpool_System.logging import LOGGING
-import logging.config
-
-logging.config.dictConfig(LOGGING)

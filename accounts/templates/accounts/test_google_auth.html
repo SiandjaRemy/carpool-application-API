@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google Auth Test</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f5f0e8;
+        --ink: #1a1714;
+        --ink-soft: #6b6459;
+        --ink-faint: #b8b0a4;
+        --surface: #ede8df;
+        --border: #d4ccbf;
+        --success-bg: #edf4ec;
+        --success-border: #a3c9a0;
+        --success-ink: #2d6b29;
+        --error-bg: #fdf0ed;
+        --error-border: #e8b4a4;
+        --error-ink: #8b2a15;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "DM Mono", monospace;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      }
+
+      .card {
+        width: 100%;
+        max-width: 400px;
+        background: white;
+        border: 1px solid var(--border);
+        box-shadow:
+          0 2px 0 var(--border),
+          0 6px 24px rgba(26, 23, 20, 0.06);
+        padding: 44px 40px 40px;
+        animation: rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+      }
+
+      h1 {
+        font-family: "DM Serif Display", serif;
+        font-size: 28px;
+        font-weight: 400;
+        line-height: 1.15;
+        color: var(--ink);
+        margin-bottom: 6px;
+      }
+
+      .subtitle {
+        font-size: 12px;
+        color: var(--ink-soft);
+        line-height: 1.6;
+        margin-bottom: 36px;
+      }
+
+      .btn-google {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        padding: 14px 20px;
+        background: var(--ink);
+        border: none;
+        color: white;
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.03em;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          transform 0.1s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-google:hover {
+        background: #2d2a27;
+      }
+      .btn-google:active {
+        transform: scale(0.99);
+      }
+      .btn-google:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .btn-google .label {
+        transition: opacity 0.15s;
+      }
+
+      .google-icon {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+
+      .spinner {
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.65s linear infinite;
+        position: absolute;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .btn-google.loading .label {
+        opacity: 0;
+      }
+      .btn-google.loading .spinner {
+        display: block;
+      }
+
+      .result {
+        margin-top: 24px;
+        display: none;
+        animation: rise 0.3s ease both;
+      }
+
+      .result.visible {
+        display: block;
+      }
+
+      .result-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .result.success .result-header {
+        background: var(--success-bg);
+        border: 1px solid var(--success-border);
+        color: var(--success-ink);
+        border-bottom: none;
+      }
+
+      .result.error .result-header {
+        background: var(--error-bg);
+        border: 1px solid var(--error-border);
+        color: var(--error-ink);
+        border-bottom: none;
+      }
+
+      .result-body {
+        padding: 14px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        font-size: 11.5px;
+        line-height: 1.8;
+      }
+
+      .result-row {
+        display: flex;
+        gap: 12px;
+      }
+
+      .result-key {
+        color: var(--ink-faint);
+        min-width: 80px;
+        flex-shrink: 0;
+      }
+      .result-val {
+        color: var(--ink);
+        word-break: break-all;
+      }
+
+      .token-preview {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+      }
+
+      .token-label {
+        font-size: 10px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 4px;
+      }
+
+      .token-val {
+        font-size: 10px;
+        color: var(--ink-soft);
+        word-break: break-all;
+        line-height: 1.6;
+      }
+      .error-msg {
+        font-size: 12px;
+        color: var(--error-ink);
+        line-height: 1.6;
+      }
+
+      .card-footer {
+        margin-top: 32px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+        font-size: 11px;
+        color: var(--ink-faint);
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #4ade80;
+        margin-right: 6px;
+        animation: blink 2s ease-in-out infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.2;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="eyebrow">Dev Environment</div>
+      <h1>Sign in<br />with Google</h1>
+      <p class="subtitle">
+        OAuth 2.0 test client — hits your local Django API on port 8000.
+      </p>
+
+      <button class="btn-google" id="loginBtn" onclick="loginWithGoogle()">
+        <div class="spinner"></div>
+        <svg
+          class="google-icon"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            fill="#4285F4"
+          />
+          <path
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            fill="#34A853"
+          />
+          <path
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            fill="#FBBC05"
+          />
+          <path
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            fill="#EA4335"
+          />
+        </svg>
+        <span class="label">Continue with Google</span>
+      </button>
+
+      <div class="result" id="result">
+        <div class="result-header" id="resultHeader"></div>
+        <div class="result-body" id="resultBody"></div>
+      </div>
+
+      <div class="card-footer">
+        <span><span class="dot"></span>localhost:8000</span>
+        <span>dev · oauth2</span>
+      </div>
+    </div>
+
+    <script>
+      // ── ✏️  ONLY EDIT THESE TWO LINES ────────────────────
+      const GOOGLE_CLIENT_ID = "{{ google_client_id }}";
+      const GOOGLE_AUTH_URL = "{{ google_auth_endpoint }}";
+      // ─────────────────────────────────────────────────────
+
+      const REDIRECT_URI = window.location.href.split("?")[0];
+
+      function loginWithGoogle() {
+        setLoading(true);
+        const params = new URLSearchParams({
+          client_id: GOOGLE_CLIENT_ID,
+          redirect_uri: REDIRECT_URI,
+          response_type: "code",
+          scope: "openid email profile",
+          access_type: "offline",
+          prompt: "consent",
+        });
+        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+      }
+
+      async function handleCallback() {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
+        const error = params.get("error");
+
+        if (error) {
+          showError(`Google returned: ${error}`);
+          return;
+        }
+        if (!code) return;
+
+        window.history.replaceState({}, "", window.location.pathname);
+        setLoading(true);
+
+        try {
+          const res = await fetch(GOOGLE_AUTH_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code, redirect_uri: REDIRECT_URI }),
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            showError(data.error || `HTTP ${res.status}`);
+            return;
+          }
+
+          localStorage.setItem("access_token", data.access);
+          localStorage.setItem("refresh_token", data.refresh);
+          showSuccess(data);
+        } catch (err) {
+          showError(`Network error — is Django running?\n${err.message}`);
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      function setLoading(on) {
+        const btn = document.getElementById("loginBtn");
+        btn.classList.toggle("loading", on);
+        btn.disabled = on;
+      }
+
+      function showSuccess(data) {
+        const u = data.user;
+        document.getElementById("resultHeader").innerHTML =
+          `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+       Authenticated successfully`;
+
+        document.getElementById("resultBody").innerHTML = `
+      ${row("name", `${u.first_name} ${u.last_name}`)}
+      ${row("email", u.email)}
+      ${row("username", u.username)}
+      ${row("id", u.id)}
+      <div class="token-preview">
+        <div class="token-label">Access Token (preview)</div>
+        <div class="token-val">${data.access.slice(0, 64)}…</div>
+      </div>`;
+
+        show("success");
+      }
+
+      function showError(msg) {
+        document.getElementById("resultHeader").innerHTML =
+          `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+       Authentication failed`;
+
+        document.getElementById("resultBody").innerHTML =
+          `<div class="error-msg">${msg}</div>`;
+
+        show("error");
+      }
+
+      function show(type) {
+        const el = document.getElementById("result");
+        el.className = `result visible ${type}`;
+      }
+
+      function row(key, val) {
+        return `<div class="result-row">
+      <span class="result-key">${key}</span>
+      <span class="result-val">${val}</span>
+    </div>`;
+      }
+
+      handleCallback();
+    </script>
+  </body>
+</html>

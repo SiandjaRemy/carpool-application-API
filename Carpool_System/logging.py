@@ -6,7 +6,6 @@ from django.conf import settings
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent  # Project root directory
-DEBUG = settings.DEBUG  # Use Django's DEBUG setting
 
 LOG_DIR = BASE_DIR / "logs"  # Central log directory
 APP_LOG_DIR = LOG_DIR / "app_logs"  # App log directory
@@ -68,7 +67,7 @@ LOGGING = {
             "level": "DEBUG",  # Log level
             "filters": ["require_debug_true"],  # Only in DEBUG mode
             "class": "logging.StreamHandler",  # Output to terminal
-            "formatter": "simple",  # Simple human-readable format
+            "formatter": "verbose",  # Simple human-readable format
         },
         # Console handler for production (JSON format)
         "production_console": {
@@ -81,7 +80,7 @@ LOGGING = {
             "formatter": "json",  # JSON format for log aggregators
         },
         # Rotating file handler for application logs (50MB max, 5 backups)
-        "file": {
+        "app_file": {
             "level": "INFO",
             "class": "concurrent_log_handler.ConcurrentRotatingFileHandler",  # Thread-safe
             "filename": APP_LOG_DIR / f"app_{CURRENT_DATE}.log",
@@ -122,12 +121,6 @@ LOGGING = {
         },
     },
     "loggers": {
-        # Django framework logs
-        "django": {
-            "handlers": ["console", "production_console", "error_file"],
-            "level": "INFO",  # INFO and above
-            "propagate": False,  # Don't pass to parent loggers
-        },
         # Django security logs (CSRF, XSS, etc.)
         "django.security": {
             "handlers": ["security_file", "mail_admins"],  # Security file + email
@@ -136,32 +129,30 @@ LOGGING = {
         },
         # HTTP request errors (404, 500, etc.)
         "django.request": {
-            "handlers": ["error_file", "mail_admins"],  # Error file + email admins
+            "handlers": [
+                "console",
+                "error_file",
+                "mail_admins",
+            ],  # Error file + email admins
             "level": "ERROR",  # Only ERROR level
             # "level": "CRITICAL",
             "propagate": False,
         },
-        # Database query logs
-        "django.db.backends": {
-            "handlers": ["file"],
-            "level": "INFO" if DEBUG else "WARNING",  # More verbose in DEBUG
-            "propagate": False,
-        },
         # Django development server logs
         "django.server": {
-            "handlers": ["error_file"],
-            "level": "ERROR",
+            "handlers": ["console", "error_file"],
+            "level": "DEBUG" if settings.DEBUG else "ERROR",  # More verbose in DEBUG
             "propagate": False,
         },
         # YOUR APPLICATION'S LOGS (most important)
         "app": {
-            "handlers": ["file", "production_console"],
-            "level": "DEBUG" if DEBUG else "INFO",  # More verbose in DEBUG
+            "handlers": ["app_file", "production_console"],
+            "level": "DEBUG" if settings.DEBUG else "INFO",  # More verbose in DEBUG
             "propagate": False,
         },
         # Celery task logs
         "celery": {
-            "handlers": ["file", "error_file"],
+            "handlers": ["app_file", "error_file"],
             "level": "INFO",
             "propagate": False,
         },

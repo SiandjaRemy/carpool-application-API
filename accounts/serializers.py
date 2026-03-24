@@ -2,13 +2,16 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from djoser.serializers import UserSerializer
-from django.utils import timezone
 from accounts.models import User
 
 from accounts.validators import validate_unique_email
+
+
+class GoogleAuthSerializer(serializers.Serializer):
+    code = serializers.CharField(required=True)
+    redirect_uri = serializers.URLField(required=True)
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -59,13 +62,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
             "status",
         ]
         read_only_fields = ["id", "status"]
-        
+
     def validate_email(self, value):
         """Convert email to lowercase and check for uniqueness."""
         lower_email = value.lower()
         # Check if email exists case-insensitive
         return validate_unique_email(lower_email)
-        
 
     def create(self, validated_data):  # Override create, not save
         """Creates and returns a new User instance, given the validated data."""
@@ -83,7 +85,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         raise NotImplementedError("Update is not supported for user creation.")
-
 
 
 class UserDataSerializer(UserSerializer):

@@ -36,6 +36,10 @@ class RideRequestModelViewset(CacheMixin, viewsets.ModelViewSet, UUIDValidationM
 
     def get_queryset(self):
         user = self.request.user
+
+        if not user.is_authenticated:
+            return RideRequest.objects.none()
+
         queryset = (
             RideRequest.objects.select_related("passenger")
             .filter(Q(ride__user=user) | Q(passenger=user))
