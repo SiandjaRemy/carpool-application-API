@@ -50,6 +50,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: Carpool_System.settings.test
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: "True"
+          REDIS_INSTANCE_URL: redis://localhost:6379/0
         run: |
           uv run pytest -v --tb=short
 
@@ -59,6 +60,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: Carpool_System.settings.test
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: "True"
+          REDIS_INSTANCE_URL: redis://localhost:6379/0
         run: |
           uv run pytest --cov=. --cov-report=term --cov-report=xml
 
