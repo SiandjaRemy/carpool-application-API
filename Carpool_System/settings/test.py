@@ -14,19 +14,30 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+if DEBUG:
+    # Use fast in-memory database for tests
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+            "TEST": {
+                "NAME": ":memory:",
+            },
+        }
+    }
+else:
+    # Use postgres db for more realistic tests
+    DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+    if not DATABASE_URL:
+        raise ValueError("DATABASE_URL must be set for testing")
 
-# Use postgres db for more realistic tests
-DATABASE_URL = os.getenv("TEST_DATABASE_URL")
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL must be set in production")
-
-DATABASES = {
-    "default": dj_database_url.parse(
-        DATABASE_URL,
-        conn_max_age=60,
-        ssl_require=True,
-    )
-}
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=60,
+            ssl_require=True,
+        )
+    }
 
 
 # Use faster password hasher for tests
