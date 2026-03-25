@@ -6,10 +6,22 @@ on:
   pull_request:
     branches: [main, dev]
 
+# Cancel in-progress runs if a new push happens on the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+
+    # Common ENV vars here to avoid repetition
+    env:
+      DJANGO_SETTINGS_MODULE: Carpool_System.settings.test
+      SECRET_KEY: test-secret-key-for-ci
+      DEBUG: "False"
+      LOCAL_REDIS_INSTANCE_URL: redis://localhost:6379/0
+      TEST_DATABASE_URL: postgres://carpool_test_user:carpool_test_pass@localhost:5432/carpool_test_db
 
     services:
       # Spin up a throwaway Postgres & redis for testing
@@ -19,8 +31,7 @@ jobs:
           POSTGRES_USER: carpool_test_user
           POSTGRES_PASSWORD: carpool_test_pass
           POSTGRES_DB: carpool_test_db
-        ports:
-          - 5432:5432
+        ports: ["5432:5432"]
         # Health check options
         options: >-
           --health-cmd pg_isready
@@ -30,8 +41,7 @@ jobs:
 
       redis:
         image: redis:7-alpine
-        ports:
-          - 6379:6379
+        ports: ["6379:6379"]
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -55,39 +65,20 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
+      # Check code style first. If this fails, CI stops immediately (saving time)
+      - name: Lint with Ruff
+        run: uv run ruff check .
+
       - name: Run migrations
-        env:
-          DJANGO_SETTINGS_MODULE: Carpool_System.settings.test
-          SECRET_KEY: test-secret-key-for-ci
-          DEBUG: "False"
-          LOCAL_REDIS_INSTANCE_URL: redis://localhost:6379/0
-          TEST_DATABASE_URL: postgres://carpool_test_user:carpool_test_pass@localhost:5432/carpool_test_db
-        run: |
-          uv run python manage.py migrate
+        run: uv run python manage.py migrate
 
-      - name: Run tests with pytest
-        env:
-          DJANGO_SETTINGS_MODULE: Carpool_System.settings.test
-          SECRET_KEY: test-secret-key-for-ci
-          DEBUG: "False"
-          LOCAL_REDIS_INSTANCE_URL: redis://localhost:6379/0
-          TEST_DATABASE_URL: postgres://carpool_test_user:carpool_test_pass@localhost:5432/carpool_test_db
-        run: |
-          uv run pytest -v --tb=short
-
+      # Run tests and generate coverage in one go
       - name: Run tests with coverage
-        if: success()
-        env:
-          DJANGO_SETTINGS_MODULE: Carpool_System.settings.test
-          SECRET_KEY: test-secret-key-for-ci
-          DEBUG: "False"
-          LOCAL_REDIS_INSTANCE_URL: redis://localhost:6379/0
-          TEST_DATABASE_URL: postgres://carpool_test_user:carpool_test_pass@localhost:5432/carpool_test_db
-        run: |
-          uv run pytest --cov=. --cov-report=term --cov-report=xml
+        run: uv run pytest --cov=. --cov-report=xml --cov-report=term-missing -v --tb=short
 
       - name: Upload HTML coverage report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-html
-          path: coverage_html/
+          path: htmlcov/
