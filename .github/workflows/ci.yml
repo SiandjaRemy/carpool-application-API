@@ -11,6 +11,14 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
 
+    services:
+      # Spin up a throwaway Postgres for testing
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,6 +41,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: Carpool_System.settings.test
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: "True"
+          REDIS_URL: redis://localhost:6379/0
         run: |
           uv run python manage.py migrate
 
