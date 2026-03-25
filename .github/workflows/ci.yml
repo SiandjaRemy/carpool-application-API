@@ -41,7 +41,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: Carpool_System.settings.test
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: "True"
-          REDIS_URL: redis://localhost:6379/0
+          REDIS_INSTANCE_URL: redis://localhost:6379/0
         run: |
           uv run python manage.py migrate
 
