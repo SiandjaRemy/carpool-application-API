@@ -6,9 +6,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import MethodNotAllowed
 
-from carpool.caching import CacheMixin
-from carpool.mixins import UUIDValidationMixin
-from carpool.paginators import CustomPageNumberPagination
+from Carpool_System.core.caching import CacheMixin
+from Carpool_System.core.mixins import UUIDValidationMixin
+from Carpool_System.core.paginators import CustomPageNumberPagination
 
 from carpool.models.reservation import Reservation
 from carpool.permissions import IsRequestOwner

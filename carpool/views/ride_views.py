@@ -6,11 +6,12 @@ from rest_framework.throttling import ScopedRateThrottle
 
 from django.utils import timezone
 
-from carpool.throttling import ActionScopedThrottleMixin
-from carpool.caching import CacheMixin
+from Carpool_System.core.paginators import CustomPageNumberPagination
+from Carpool_System.core.caching import CacheMixin
+from Carpool_System.core.mixins import UUIDValidationMixin
+from Carpool_System.core.throttling import ActionScopedThrottleMixin
+
 from carpool.enums.enums import RideStatus
-from carpool.mixins import UUIDValidationMixin
-from carpool.paginators import CustomPageNumberPagination
 from carpool.permissions import IsCreatorOrReadOnly, IsRideOwner
 
 from carpool.models.ride import Ride

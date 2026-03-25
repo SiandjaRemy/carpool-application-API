@@ -5,18 +5,17 @@ from rest_framework.decorators import action
 
 from django.db.models import Q
 
-from carpool.caching import CacheMixin, cache_user_action
-from carpool.mixins import UUIDValidationMixin
-from carpool.paginators import CustomPageNumberPagination
+from Carpool_System.core.caching import CacheMixin, cache_user_action
+from Carpool_System.core.mixins import UUIDValidationMixin
+from Carpool_System.core.paginators import CustomPageNumberPagination
+
 from carpool.permissions import (
     IsRequestOwner,
     IsRequestOwnerOrReadOnly,
     IsRequestPending,
     IsRideOwner,
 )
-
 from carpool.models.request import RideRequest
-
 from carpool.serializers.base_serializers import BlankSerializer
 from carpool.serializers.request_serializers import (
     AcceptRideRequestSerializer,

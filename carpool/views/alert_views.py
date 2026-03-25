@@ -3,20 +3,17 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 
-from carpool.caching import CacheMixin
-from carpool.mixins import UUIDValidationMixin
-from carpool.paginators import CustomPageNumberPagination
+from Carpool_System.core.caching import CacheMixin
+from Carpool_System.core.mixins import UUIDValidationMixin
+from Carpool_System.core.paginators import CustomPageNumberPagination
+
 from carpool.permissions import IsAlertOwner
-
 from carpool.models.alert import RideAlert
-
 from carpool.serializers.alert_serializers import (
     RideAlertModelSerializer,
     RideAlertUpdateModelSerializer,
 )
 from carpool.serializers.base_serializers import BlankSerializer
-
-
 from carpool.services.alert_service import RideAlertService
 
 

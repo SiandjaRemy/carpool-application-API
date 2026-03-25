@@ -84,7 +84,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     # My custom exception handler
-    "EXCEPTION_HANDLER": "carpool.exceptions.custom_exception_handler",
+    "EXCEPTION_HANDLER": "Carpool_System.core.exceptions.custom_exception_handler",
     # Throttling
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.ScopedRateThrottle",  # For action-based throttling
