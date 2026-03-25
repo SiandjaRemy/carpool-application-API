@@ -1,6 +1,6 @@
 import pytest
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from datetime import timedelta
 
@@ -132,7 +132,7 @@ class TestReservationSerializer:
         with pytest.raises(KeyError):
             serializer.save()  # Will fail without context
 
-    def test_serializer_service_error_handling(self, db):
+    def test_cancel_pay_serializer_service_error_handling(self, db):
         """Test that service errors propagate through serializer"""
         user = UserFactory()
         reservation_id = "123e4567-e89b-12d3-a456-426614174000"
@@ -266,7 +266,7 @@ class TestReservationSerializer:
         assert field.allow_blank is False
         assert field.allow_null is False
 
-    def test_serializer_service_error_handling(self, db):
+    def test_pay_serializer_service_error_handling(self, db):
         """Test that service errors propagate through serializer"""
         user = UserFactory()
         reservation_id = "123e4567-e89b-12d3-a456-426614174000"

@@ -5,7 +5,6 @@ import pytest
 from django.utils import timezone
 
 from carpool.enums.enums import RequestStatus
-from carpool.models.reservation import Reservation
 from carpool.services.request_service import RideRequestService
 from carpool.tests.factories import RideFactory, RideRequestFactory, UserFactory
 

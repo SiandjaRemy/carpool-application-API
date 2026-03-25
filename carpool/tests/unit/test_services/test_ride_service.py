@@ -96,7 +96,7 @@ class TestRideService:
         ride = RideFactory(user=user)
         ride_request = RideRequestFactory(ride=ride, status=RequestStatus.ACCEPTED)
 
-        ride_reservation = ReservationFactory.from_request(ride_request)
+        ReservationFactory.from_request(ride_request)
 
         RideService.cancel_ride(ride.id, user)
 

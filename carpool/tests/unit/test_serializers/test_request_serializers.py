@@ -507,7 +507,6 @@ class TestSerializersIntegration:
 
     def test_full_request_lifecycle(self, db):
         """Test creating, updating, accepting, and cancelling a request"""
-        from carpool.services.request_service import RideRequestService
 
         # Create data
         passenger = UserFactory()

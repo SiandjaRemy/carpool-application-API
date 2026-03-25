@@ -4,7 +4,7 @@ from django.utils import timezone
 from decimal import Decimal
 
 from carpool.services.reservation_service import ReservationService
-from carpool.enums.enums import ReservationStatus, RideStatus, ReservationPaymentStatus
+from carpool.enums.enums import RideStatus, ReservationPaymentStatus
 from carpool.tests.factories import (
     UserFactory,
     RideFactory,
@@ -50,7 +50,7 @@ class TestReservationService:
         passenger = UserFactory()
         ride = RideFactory(available_seats=2)
 
-        reservation = ReservationService.create_reservation(
+        ReservationService.create_reservation(
             ride=ride,
             passenger=passenger,
             seats_requested=2,
@@ -247,7 +247,7 @@ class TestReservationService:
                 reservation_id=reservation.id, passenger=other_user
             )
 
-    def test_cancel_paid_reservation_ride_departed(self, db, freezer):
+    def test_pay_for_paid_ride_reservation(self, db, freezer):
         """Test cannot pay for a paid reservation"""
         passenger = UserFactory()
 

@@ -1,7 +1,7 @@
 import pytest
 from datetime import timedelta
 from django.utils import timezone
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 from carpool.services.alert_service import RideAlertService
 from carpool.enums.enums import RideStatus
