@@ -49,6 +49,14 @@ PASSWORD_HASHERS = [
 REDIS_URL = os.environ.get("LOCAL_REDIS_INSTANCE_URL")
 
 
+# Cache for tests
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+    }
+}
+
 # Email backend for tests
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 

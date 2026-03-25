@@ -60,7 +60,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: Carpool_System.settings.test
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: "False"
-          REDIS_INSTANCE_URL: redis://localhost:6379/0
+          LOCAL_REDIS_INSTANCE_URL: redis://localhost:6379/0
           TEST_DATABASE_URL: postgres://carpool_test_user:carpool_test_pass@localhost:5432/carpool_test_db
         run: |
           uv run python manage.py migrate
@@ -70,7 +70,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: Carpool_System.settings.test
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: "False"
-          REDIS_INSTANCE_URL: redis://localhost:6379/0
+          LOCAL_REDIS_INSTANCE_URL: redis://localhost:6379/0
           TEST_DATABASE_URL: postgres://carpool_test_user:carpool_test_pass@localhost:5432/carpool_test_db
         run: |
           uv run pytest -v --tb=short
@@ -81,7 +81,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: Carpool_System.settings.test
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: "False"
-          REDIS_URL: redis://localhost:6379/0
+          LOCAL_REDIS_INSTANCE_URL: redis://localhost:6379/0
           TEST_DATABASE_URL: postgres://carpool_test_user:carpool_test_pass@localhost:5432/carpool_test_db
         run: |
           uv run pytest --cov=. --cov-report=term --cov-report=xml
