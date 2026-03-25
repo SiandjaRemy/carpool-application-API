@@ -12,7 +12,21 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      # Spin up a throwaway Postgres for testing
+      # Spin up a throwaway Postgres & redis for testing
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        # Health check options
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
       redis:
         image: redis:7-alpine
@@ -42,6 +56,7 @@ jobs:
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: "True"
           REDIS_INSTANCE_URL: redis://localhost:6379/0
+          DATABASE_URL: postgres://user:password@localhost:5432/test_db
         run: |
           uv run python manage.py migrate
 
@@ -51,6 +66,7 @@ jobs:
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: "True"
           REDIS_INSTANCE_URL: redis://localhost:6379/0
+          DATABASE_URL: postgres://user:password@localhost:5432/test_db
         run: |
           uv run pytest -v --tb=short
 
@@ -61,6 +77,7 @@ jobs:
           SECRET_KEY: test-secret-key-for-ci
           DEBUG: "True"
           REDIS_INSTANCE_URL: redis://localhost:6379/0
+          TEST_DATABASE_URL: postgres://user:password@localhost:5432/test_db
         run: |
           uv run pytest --cov=. --cov-report=term --cov-report=xml
 

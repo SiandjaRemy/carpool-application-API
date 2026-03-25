@@ -1,3 +1,5 @@
+import dj_database_url
+
 from .base import *
 import os
 
@@ -12,15 +14,18 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-# Use fast in-memory database for tests
+
+# Use postgres db for more realistic tests
+DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL must be set in production")
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
-        "TEST": {
-            "NAME": ":memory:",
-        },
-    }
+    "default": dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=60,
+        ssl_require=True,
+    )
 }
 
 
