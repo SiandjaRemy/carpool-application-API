@@ -85,6 +85,29 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     # My custom exception handler
     "EXCEPTION_HANDLER": "carpool.exceptions.custom_exception_handler",
+    # Throttling
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",  # For action-based throttling
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        # Specific action rates
+        "list": "50/hour",  # List/read actions
+        "retrieve": "100/hour",  # Detail view actions
+        # Authenticated users actions
+        "user_create": "20/hour",  # Regular creation actions
+        "user_update": "20/hour",  # Update actions
+        "user_custom": "20/hour",  # Custom actions
+        # Sensitive actions
+        "auth": "3/minute",  # Authentication endpoints
+        "password_reset": "5/hour",  # Password reset requests
+        "register": "5/hour",  # User registration
+        "verify_email": "5/hour",  # Email verification
+        # High-cost operations
+        "complex_query": "50/hour",  # Complex database queries
+        "payment": "10/hour",  # Payment operations
+        # Default fallback
+        "default_scope": "100/day",
+    },
 }
 
 SIMPLE_JWT = {

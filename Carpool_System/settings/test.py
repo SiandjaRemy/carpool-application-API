@@ -32,13 +32,6 @@ PASSWORD_HASHERS = [
 # Local Cache / Redis
 REDIS_URL = os.environ.get("LOCAL_REDIS_INSTANCE_URL")
 
-# Cache for tests
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "unique-snowflake",
-    }
-}
 
 # Email backend for tests
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"

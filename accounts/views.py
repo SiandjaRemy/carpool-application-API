@@ -53,18 +53,11 @@ class GoogleAuthView(APIView):
 
 class UserView(generics.RetrieveUpdateAPIView):
     serializer_class = UserDataSerializer
+    http_method_names = ["get", "patch"]
     permission_classes = [IsAuthenticated]  # Only authenticated users can access
 
     def get_object(self):
         return self.request.user  # Return the currently authenticated user
-
-    def put(self, request, *args, **kwargs):
-        # Customize PUT behavior if needed (e.g., partial updates)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
 
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -85,6 +78,7 @@ class UserCreateAPIView(generics.CreateAPIView):
 
     def post(self, request):
         serializer = UserCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         if serializer.is_valid():
             try:
                 serializer.save()

@@ -4,9 +4,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from carpool.models import Ride
-from carpool.enums.enums import RequestStatus, ReservationPaymentStatus, RideStatus
+from carpool.enums.enums import RideStatus
 from carpool.services.request_service import RideRequestService
-from carpool.services.reservation_service import ReservationService
 
 
 class RideService:

@@ -2,30 +2,46 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import action
+from rest_framework.throttling import ScopedRateThrottle
 
 from django.utils import timezone
 
+from carpool.throttling import ActionScopedThrottleMixin
 from carpool.caching import CacheMixin
 from carpool.enums.enums import RideStatus
 from carpool.mixins import UUIDValidationMixin
 from carpool.paginators import CustomPageNumberPagination
-from carpool.permissions import IsCreatorOrReadOnly
+from carpool.permissions import IsCreatorOrReadOnly, IsRideOwner
 
 from carpool.models.ride import Ride
 
 from carpool.serializers.base_serializers import BlankSerializer
 from carpool.serializers.ride_serializers import (
+    CancelRideSerializer,
     RideModelSerializer,
     RideUpdateSerializer,
 )
 
 
-class RideModelViewset(CacheMixin, viewsets.ModelViewSet, UUIDValidationMixin):
-    http_method_names = ["get", "post", "patch", "head"]
+class RideModelViewset(
+    ActionScopedThrottleMixin, CacheMixin, viewsets.ModelViewSet, UUIDValidationMixin
+):
+    http_method_names = ["get", "post", "patch"]
     pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthenticatedOrReadOnly, IsCreatorOrReadOnly]
 
     cache_timeout = 300
+
+    throttle_classes = [ScopedRateThrottle]
+
+    throttle_scope_mapping = {
+        "list": "list",
+        "retrieve": "retrieve",
+        "create": "user_create",
+        "partial_update": "user_update",
+        "my_rides": "list",
+        "cancel_ride": "user_custom",
+    }
 
     def get_queryset(self):
         current_time = timezone.now()
@@ -83,3 +99,34 @@ class RideModelViewset(CacheMixin, viewsets.ModelViewSet, UUIDValidationMixin):
 
         my_rides = RideModelSerializer(rides, many=True)
         return Response(my_rides.data, status=status.HTTP_200_OK)
+
+    @action(
+        methods=["PATCH"],
+        detail=True,
+        url_path="cancel",
+        url_name="cancel",
+        permission_classes=[IsAuthenticated, IsRideOwner],
+    )
+    def cancel_ride(self, request, pk=None):
+        """
+        Cancel a ride and refund passengers if needed.
+        """
+        serializer = CancelRideSerializer(
+            data=request.data,
+            context={
+                "user": request.user,
+                "ride_id": pk,
+            },
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        result = serializer.save()
+
+        return Response(
+            {
+                "detail": result["detail"],
+                "ride_status": result["ride"].status,
+            },
+            status=status.HTTP_200_OK,
+        )

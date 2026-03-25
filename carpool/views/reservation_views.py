@@ -53,8 +53,6 @@ class ReservationModelViewset(CacheMixin, viewsets.ModelViewSet, UUIDValidationM
 
     def get_serializer_class(self):
         """Return different serializers based on action"""
-        if self.action == "cancel":
-            return CancelReservationSerializer
         if self.action == "payment":
             return PayReservationSerializer
         return ReservationsModelSerializer

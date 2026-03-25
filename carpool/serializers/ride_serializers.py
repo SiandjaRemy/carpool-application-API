@@ -46,6 +46,28 @@ class RideModelSerializer(serializers.ModelSerializer):
         return new_ride
 
 
+class SimpleRideModelSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Ride
+        fields = [
+            "id",
+            "user_name",
+            "departure_town",
+            "arrival_town",
+            "departure_datetime",
+            "available_seats",
+            "price_per_seat",
+            "fully_reserved",
+        ]
+
+    def get_user_name(self, obj: Ride):
+        """Returns the ride creator's name"""
+        user_name = obj.user.get_full_name()
+        return user_name
+
+
 class RideUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating rides - only allowed fields are updatable"""
 
@@ -82,23 +104,15 @@ class RideUpdateSerializer(serializers.ModelSerializer):
         return updated_ride
 
 
-class SimpleRideModelSerializer(serializers.ModelSerializer):
-    user_name = serializers.SerializerMethodField()
+class CancelRideSerializer(serializers.Serializer):
 
-    class Meta:
-        model = Ride
-        fields = [
-            "id",
-            "user_name",
-            "departure_town",
-            "arrival_town",
-            "departure_datetime",
-            "available_seats",
-            "price_per_seat",
-            "fully_reserved",
-        ]
+    def save(self, **kwargs):
+        ride_id = self.context["ride_id"]
+        user = self.context["user"]
 
-    def get_user_name(self, obj: Ride):
-        """Returns the ride creator's name"""
-        user_name = obj.user.get_full_name()
-        return user_name
+        ride = RideService.cancel_ride(ride_id=ride_id, user=user)
+
+        return {
+            "ride": ride,
+            "detail": "Ride cancelled successfully",
+        }
