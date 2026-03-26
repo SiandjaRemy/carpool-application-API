@@ -29,8 +29,8 @@ class TestRideAlertEndpoints:
         user = authenticated_client.user
 
         # Create alerts for this user
-        alert1 = RideAlertFactory(user=user)
-        alert2 = RideAlertFactory(user=user)
+        RideAlertFactory(user=user)
+        RideAlertFactory(user=user)
 
         # Create alert for another user (should not appear)
         RideAlertFactory()
@@ -112,7 +112,6 @@ class TestRideAlertEndpoints:
 
     def test_create_duplicate_alert(self, authenticated_client, db):
         """Test user cannot create duplicate active alert for same route"""
-        user = authenticated_client.user
         url = reverse(alert_list_url)
         now = timezone.now()
         data = {

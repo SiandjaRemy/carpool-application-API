@@ -35,8 +35,8 @@ class TestRideRequestEndpoints:
         """Test authenticated user cannot list requests for a ride"""
         # Create a ride and some requests
         ride = RideFactory()
-        request1 = RideRequestFactory(ride=ride)
-        request2 = RideRequestFactory(ride=ride)
+        RideRequestFactory(ride=ride)
+        RideRequestFactory(ride=ride)
 
         url = reverse(ride_request_list_url, kwargs={"rides_pk": ride.id})
         response = authenticated_client.get(url)
@@ -384,7 +384,7 @@ class TestRideRequestEndpoints:
         # Create a request for this user
         ride_request = RideRequestFactory(ride=ride, passenger=user)
         # Create a request for another user
-        ride_request2 = RideRequestFactory(ride=ride, passenger=another_client.user)
+        RideRequestFactory(ride=ride, passenger=another_client.user)
 
         url = reverse(ride_request_my_request_url, kwargs={"rides_pk": ride.id})
         response = authenticated_client.get(url)

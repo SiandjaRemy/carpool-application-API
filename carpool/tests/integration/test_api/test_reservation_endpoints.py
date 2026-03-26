@@ -30,8 +30,8 @@ class TestReservationEndpoints:
         user = authenticated_client.user
 
         # Create reservations for this user
-        reservation1 = ReservationFactory(passenger=user)
-        reservation2 = ReservationFactory(passenger=user)
+        ReservationFactory(passenger=user)
+        ReservationFactory(passenger=user)
 
         # Create reservation for another user (should not appear)
         ReservationFactory()

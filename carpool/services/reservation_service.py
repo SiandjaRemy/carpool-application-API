@@ -286,7 +286,7 @@ class ReservationService:
             status=ReservationStatus.CANCELLED,
         )
 
-        return "Done"
+        return f"{updated_count} Updated"
 
     @classmethod
     def get_reservation_stats(cls, ride_id, user):

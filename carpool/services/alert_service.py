@@ -170,7 +170,7 @@ class RideAlertService:
         if not alert.is_active:
             return
 
-        matching_rides = cls.find_matching_rides(alert)
+        cls.find_matching_rides(alert)
 
         # if matching_rides.exists():
         #     # Trigger notification to user

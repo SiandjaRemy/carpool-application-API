@@ -2,7 +2,7 @@
 import pytest
 from datetime import timedelta
 from django.utils import timezone
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from carpool.serializers.alert_serializers import (
     RideAlertModelSerializer,
@@ -121,7 +121,6 @@ class TestRideAlertModelSerializer:
     def test_validation_without_dates(self, db):
         """Test validation of date fields"""
         user = UserFactory()
-        now = timezone.now()
 
         # Valid dates
         data = {

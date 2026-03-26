@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 from carpool.serializers.request_serializers import (
@@ -8,7 +8,7 @@ from carpool.serializers.request_serializers import (
     RejectRideRequestSerializer,
     CancelRideRequestSerializer,
 )
-from carpool.enums.enums import RequestStatus, RideStatus
+from carpool.enums.enums import RequestStatus
 from carpool.tests.factories import (
     UserFactory,
     RideFactory,
@@ -345,14 +345,14 @@ class TestRideRequestSerializer:
 
     """Tests for accepting ride requests"""
 
-    def test_serializer_no_input_fields(self):
+    def test_accept_request_serializer_no_input_fields(self):
         """Test that serializer has no required input fields"""
         serializer = AcceptRideRequestSerializer(data={})
         assert serializer.is_valid() is True
         assert serializer.validated_data == {}
 
-    def test_save_calls_service(self, db):
-        """Test that save method calls the request service"""
+    def test_accept_request_serializer_save_method_calls_service(self, db):
+        """Test that save method of AcceptRideRequestSerializer calls the request service"""
         user = UserFactory()
         ride_request = RideRequestFactory()
 
@@ -388,14 +388,14 @@ class TestRideRequestSerializer:
 
     """Tests for rejecting ride requests"""
 
-    def test_serializer_no_input_fields(self):
+    def test_reject_request_serializer_no_input_fields(self):
         """Test that serializer has no required input fields"""
         serializer = RejectRideRequestSerializer(data={})
         assert serializer.is_valid() is True
         assert serializer.validated_data == {}
 
-    def test_save_calls_service(self, db):
-        """Test that save method calls the request service"""
+    def test_reject_request_serializer_save_method_calls_service(self, db):
+        """Test that save method of RejectRideRequestSerializer calls the request service"""
         user = UserFactory()
         ride_request = RideRequestFactory()
 
@@ -444,14 +444,14 @@ class TestRideRequestSerializer:
 
     """Tests for cancelling ride requests"""
 
-    def test_serializer_no_input_fields(self):
+    def test_cancel_request_serializer_no_input_fields(self):
         """Test that serializer has no required input fields"""
         serializer = CancelRideRequestSerializer(data={})
         assert serializer.is_valid() is True
         assert serializer.validated_data == {}
 
-    def test_save_calls_service(self, db):
-        """Test that save method calls the request service"""
+    def test_cancel_request_serializer_save_method_calls_service(self, db):
+        """Test that save method of CancelRideRequestSerializer calls the request service"""
         user = UserFactory()
         ride_request = RideRequestFactory()
 
@@ -480,7 +480,8 @@ class TestRideRequestSerializer:
         """Test that only the passenger can cancel their request"""
         # This would be tested in the service, but we can test the serializer passes correctly
         passenger = UserFactory()
-        other_user = UserFactory()
+        # The other user
+        UserFactory()
         ride_request = RideRequestFactory(passenger=passenger)
 
         serializer = CancelRideRequestSerializer(
@@ -496,7 +497,7 @@ class TestRideRequestSerializer:
             "carpool.services.request_service.RideRequestService.cancel_request"
         ) as mock_cancel:
             mock_cancel.return_value = ride_request
-            result = serializer.save()
+            serializer.save()
             mock_cancel.assert_called_once_with(
                 request_id=ride_request.id, user=passenger
             )

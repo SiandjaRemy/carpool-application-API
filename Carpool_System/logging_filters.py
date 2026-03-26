@@ -1,9 +1,8 @@
+import logging
 from contextvars import ContextVar
 
 # Thread-safe storage for current request
 request_var: ContextVar = ContextVar("request_var", default=None)
-
-import logging
 
 
 class RequestContextFilter(logging.Filter):

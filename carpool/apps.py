@@ -6,4 +6,4 @@ class CarpoolConfig(AppConfig):
     name = "carpool"
 
     def ready(self):
-        import carpool.signals
+        pass

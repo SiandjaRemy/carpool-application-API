@@ -3,7 +3,7 @@ import uuid
 from django.db import transaction
 from django.utils import timezone
 from carpool.models import RideRequest, Ride
-from carpool.enums.enums import RequestStatus, ReservationStatus, RideStatus
+from carpool.enums.enums import RequestStatus, RideStatus
 from carpool.services.reservation_service import ReservationService
 
 
@@ -249,9 +249,7 @@ class RideRequestService:
             return requests.none()  # Return empty queryset
 
         # Update the status of the accepted request
-        accepted_request = requests.filter(
-            ride_id=ride_id, status=RequestStatus.ACCEPTED
-        ).update(
+        requests.filter(ride_id=ride_id, status=RequestStatus.ACCEPTED).update(
             status=RequestStatus.DRIVER_CANCELLED,
         )
 

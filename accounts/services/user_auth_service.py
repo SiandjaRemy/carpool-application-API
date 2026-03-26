@@ -1,10 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from accounts.validators import validate_unique_email
-from carpool.tests.conftest import user
 
 User = get_user_model()
 

@@ -9,8 +9,6 @@ mimetypes.add_type("application/javascript", ".js")
 
 SECRET_KEY = "django-insecure-2@6qm0mn7=k&y-s7d=^$625*$(3)hx^)73i_ee4r*f2194)3#v"
 
-# Overide just to be sure
-DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 

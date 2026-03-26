@@ -28,8 +28,8 @@ def alert_users_for_ride(ride_id):
             available_seats__lte=ride.available_seats,
         )
         if alerts is not None:
-            subject = "Your ride alert has just been triggered"
-            message = f"Hello, a ride from {ride.departure_town} to {ride.arrival_town} on {ride.departure_datetime} was just created, check it out"
+            # subject = "Your ride alert has just been triggered"
+            # message = f"Hello, a ride from {ride.departure_town} to {ride.arrival_town} on {ride.departure_datetime} was just created, check it out"
             user_mails = []
             for alert in list(alerts):
                 user_mails.append(alert.user.email)

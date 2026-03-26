@@ -14,9 +14,6 @@ from django.conf import settings
 from django.db import transaction
 
 
-import requests
-
-
 from accounts.serializers import (
     GoogleAuthSerializer,
     LogoutSerializer,
@@ -27,7 +24,6 @@ from accounts.serializers import (
     UserDataSerializer,
 )
 from accounts.services.google_auth_service import GoogleAuthService
-from accounts.tasks import email_user
 
 
 User = get_user_model()
@@ -127,13 +123,14 @@ class PasswordResetView(APIView):
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             # Construct the reset link. Be sure to configure your frontend URL.
             reset_link = f"{settings.FRONTEND_URL}authentication/password-reset?uid={uidb64}&token={token}"  # Use settings
-            # print(f"Token: {token}")
-            # print(f"uidb64: {uidb64}")
+            print(f"Token: {token}")
+            print(f"uidb64: {uidb64}")
+            print(f"reset_link: {reset_link}")
             try:
-                subject = str("Password Reset Request")
-                message = str(
-                    f"Please click the link below to reset your password:\n{reset_link}"
-                )
+                # subject = str("Password Reset Request")
+                # message = str(
+                #     f"Please click the link below to reset your password:\n{reset_link}"
+                # )
 
                 # Celery now handles email sending
                 # email_user.delay(email=email, subject=subject, message=message)
