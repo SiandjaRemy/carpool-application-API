@@ -161,8 +161,8 @@ class TestReservationEndpoints:
     # Cancel Reservation Action (PATCH /reservations/{id}/cancel/)
     # ----------------------------------------------------------------------
 
-    def test_cancel_own_reservation(self, authenticated_client, db, freezer):
-        """Test user can cancel their own pending reservation"""
+    def test_cancel_own_pending_reservation(self, authenticated_client, db, freezer):
+        """Test user can cancel their own pending reservation even 1 hour before departure"""
         from django.utils import timezone
         from datetime import timedelta
 
@@ -170,8 +170,50 @@ class TestReservationEndpoints:
         now = timezone.now()
         freezer.move_to(now)
 
-        # Create a ride departing in 3 hours
-        ride = RideFactory(departure_datetime=now + timedelta(hours=3))
+        # Create a ride departing in 1 hours
+        # 8 seats only so that cancel will make limit to exceeded
+        ride = RideFactory(
+            departure_datetime=now + timedelta(hours=1), available_seats=8
+        )
+        # Create a paid reservation for that ride
+        reservation = ReservationFactory(
+            passenger=user,
+            ride=ride,
+            seats_requested=2,
+        )
+
+        # Record initial seat count
+        initial_seats = ride.available_seats
+
+        url = reverse(reservation_cancel_url, kwargs={"pk": reservation.id})
+        response = authenticated_client.patch(url, {}, format="json")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["detail"] == "Reservation cancelled successfully"
+
+        # Verify reservation was updated
+        reservation.refresh_from_db()
+        assert reservation.status == ReservationStatus.CANCELLED
+        # Since no payment was made, disable instead of refunding
+        assert reservation.payment_status == ReservationPaymentStatus.PAYMENT_DISABLED
+
+        # Verify seats were returned to the ride
+        ride.refresh_from_db()
+        assert ride.available_seats == initial_seats + 2
+
+    def test_cancel_own_reservation(self, authenticated_client, db, freezer):
+        """Test user cant cancel their paid reservation 2 hour before departure"""
+        from django.utils import timezone
+        from datetime import timedelta
+
+        user = authenticated_client.user
+        now = timezone.now()
+        freezer.move_to(now)
+
+        # Create a ride departing in 2 hours
+        ride = RideFactory(
+            departure_datetime=now + timedelta(hours=2), available_seats=8
+        )
         # Create a paid reservation for that ride
         reservation = ReservationFactory(
             passenger=user,
@@ -187,17 +229,20 @@ class TestReservationEndpoints:
         url = reverse(reservation_cancel_url, kwargs={"pk": reservation.id})
         response = authenticated_client.patch(url, {}, format="json")
 
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["detail"] == "Reservation cancelled successfully"
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            "cannot cancel paid reservation less than 2 hours before departure"
+            in response.data["detail"].lower()
+        )
 
         # Verify reservation was updated
         reservation.refresh_from_db()
-        assert reservation.status == ReservationStatus.CANCELLED
-        assert reservation.payment_status == ReservationPaymentStatus.REFUNDED
+        assert reservation.status == ReservationStatus.CONFIRMED
+        assert reservation.payment_status == ReservationPaymentStatus.PAID
 
         # Verify seats were returned to the ride
         ride.refresh_from_db()
-        assert ride.available_seats == initial_seats + 2
+        assert ride.available_seats == initial_seats
 
     def test_cancel_others_reservation(
         self, authenticated_client, another_client, db, freezer
@@ -218,7 +263,7 @@ class TestReservationEndpoints:
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_cancel_reservation_late(self, authenticated_client, db, freezer):
-        """Test user can cancel reservation close to departure"""
+        """Test user can cancel pending reservation close to departure"""
         from django.utils import timezone
         from datetime import timedelta
 
@@ -227,12 +272,16 @@ class TestReservationEndpoints:
         freezer.move_to(now)
 
         # Create ride departing in 1 hour (less than 2-hour window)
-        ride = RideFactory(departure_datetime=now + timedelta(hours=1))
-        reservation = ReservationFactory(passenger=user, ride=ride)
+        ride = RideFactory(
+            departure_datetime=now + timedelta(hours=1), available_seats=5
+        )
+        reservation = ReservationFactory(passenger=user, ride=ride, seats_requested=4)
 
         url = reverse(reservation_cancel_url, kwargs={"pk": reservation.id})
         response = authenticated_client.patch(url, {}, format="json")
 
+        print("###################################")
+        print(f"Response: {response.data}")
         assert response.status_code == status.HTTP_200_OK
 
     def test_cancel_already_cancelled_reservation(
@@ -285,8 +334,7 @@ class TestReservationEndpoints:
 
         response = authenticated_client.patch(url, {}, format="json")
 
-        # assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_cancel_reservation_unauthenticated(self, api_client, db):
         """Test unauthenticated user cannot cancel reservation"""

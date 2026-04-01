@@ -72,9 +72,6 @@ class RideRequestModelViewset(CacheMixin, viewsets.ModelViewSet, UUIDValidationM
             return CancelRideRequestSerializer
         return RideRequestModelSerializer
 
-    def get_exception_handler(self):
-        return super().get_exception_handler()
-
     @cache_user_action(timeout=60 * 5)  # Caches custom action for 60 seconds
     @action(
         methods=["GET"],

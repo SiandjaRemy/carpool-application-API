@@ -81,6 +81,4 @@ class TestRideThrottling:
         response = authenticated_client.patch(url3)
 
         assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-        assert (
-            "too many attempts. please try again in " in response.data["detail"].lower()
-        )
+        assert "request was throttled" in response.data["detail"].lower()

@@ -3,8 +3,10 @@ from datetime import timedelta
 import pytest
 
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
 from carpool.enums.enums import RequestStatus
+from carpool.exceptions import BusinessValidationError
 from carpool.services.request_service import RideRequestService
 from carpool.tests.factories import RideFactory, RideRequestFactory, UserFactory
 
@@ -50,7 +52,9 @@ class TestRideRequestService:
             ride=ride,
         )
 
-        with pytest.raises(ValueError, match="not found or you don't have permission"):
+        with pytest.raises(
+            ObjectDoesNotExist, match="RideRequest matching query does not exist"
+        ):
             RideRequestService.accept_request(ride_request.id, wrong_user)
 
     def test_accept_request_fails_if_not_pending(self, db):
@@ -61,7 +65,7 @@ class TestRideRequestService:
             ride=ride, status=RequestStatus.ACCEPTED  # Already accepted
         )
 
-        with pytest.raises(ValueError, match="Only pending requests"):
+        with pytest.raises(BusinessValidationError, match="Only pending requests"):
             RideRequestService.accept_request(ride_request.id, driver)
 
     def test_accept_request_fails_if_insufficient_seats(self, db):
@@ -75,7 +79,7 @@ class TestRideRequestService:
             seats_requested=2,
         )
 
-        with pytest.raises(ValueError, match="Not enough seats"):
+        with pytest.raises(BusinessValidationError, match="Not enough seats"):
             RideRequestService.accept_request(ride_request.id, driver)
 
     def test_accept_request_fails_if_ride_departed(self, db):
@@ -92,7 +96,7 @@ class TestRideRequestService:
             seats_requested=1,
         )
 
-        with pytest.raises(ValueError, match="already departed"):
+        with pytest.raises(BusinessValidationError, match="already departed"):
             RideRequestService.accept_request(ride_request.id, driver)
 
     # Testing Reject method

@@ -49,3 +49,15 @@ class Ride(TimeStampedModel):
             models.Index(fields=["departure_town", "arrival_town"]),
             models.Index(fields=["status"]),
         ]
+        constraints = [
+            # Ensures available_seats is always between 1 and 10 at the DB level
+            models.CheckConstraint(
+                condition=models.Q(available_seats__gte=0)
+                & models.Q(available_seats__lte=10),
+                name="available_seats_range",
+            ),
+            # Ensures price is never zero or negative
+            models.CheckConstraint(
+                condition=models.Q(price_per_seat__gte=1), name="price_positive"
+            ),
+        ]

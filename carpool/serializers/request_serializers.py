@@ -47,9 +47,10 @@ class RideRequestModelSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         user = self.context["user"]
+        request_id = self.context["request_id"]
 
         updated_request = RideRequestService.update_request(
-            update_data=validated_data, instance=instance, passenger=user
+            request_id=request_id, update_data=validated_data, passenger=user
         )
 
         return updated_request

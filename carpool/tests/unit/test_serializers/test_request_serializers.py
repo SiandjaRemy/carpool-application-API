@@ -240,6 +240,7 @@ class TestRideRequestSerializer:
 
         context = {
             "user": passenger,
+            "request_id": ride_request.id,
         }
 
         serializer = RideRequestModelSerializer(
@@ -532,7 +533,7 @@ class TestSerializersIntegration:
             instance=ride_request,
             data={"seats_requested": 3},
             partial=True,
-            context={"user": passenger},
+            context={"user": passenger, "request_id": ride_request.id},
         )
         assert update_serializer.is_valid()
         updated_request = update_serializer.save()

@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 import pytest
 from datetime import timedelta
 
@@ -72,7 +73,7 @@ class TestRideModel:
             ride.full_clean()
 
         # Test maximum seats
-        with pytest.raises(ValidationError):
+        with pytest.raises(IntegrityError, match="available_seats_range"):
             ride = Ride.objects.create(
                 user=user,
                 departure_town="Paris",
@@ -87,13 +88,13 @@ class TestRideModel:
         """Test price_per_seat must be positive"""
         user = UserFactory()
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(IntegrityError, match="price_positive"):
             ride = Ride.objects.create(
                 user=user,
                 departure_town="Paris",
                 arrival_town="Lyon",
                 departure_datetime=departure_datetime,
                 available_seats=7,
-                price_per_seat=30.45,  # Invalid
+                price_per_seat=-30.45,  # Invalid
             )
             ride.full_clean()

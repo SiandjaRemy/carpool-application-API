@@ -1,6 +1,10 @@
 import pytest
 from datetime import timedelta
+
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
+
+from carpool.exceptions import BusinessValidationError
 from carpool.services.ride_service import RideService
 from carpool.enums.enums import (
     RequestStatus,
@@ -52,7 +56,7 @@ class TestRideService:
             "price_per_seat": 25.50,
         }
 
-        with pytest.raises(ValueError, match="must be in the future"):
+        with pytest.raises(BusinessValidationError, match="must be in the future"):
             RideService.create_ride(ride_data, user)
 
     # Update ride
@@ -64,7 +68,7 @@ class TestRideService:
 
         update_data = {"available_seats": 3, "price_per_seat": 30.00}
 
-        updated_ride = RideService.update_ride(update_data, ride, user)
+        updated_ride = RideService.update_ride(ride.id, update_data, user)
 
         assert updated_ride.available_seats == 3
         assert updated_ride.price_per_seat == 30.00
@@ -76,8 +80,10 @@ class TestRideService:
         ride = RideFactory(user=owner)
 
         data = {"available_seats": 3}
-        with pytest.raises(ValueError, match="not found or you don't have permission"):
-            RideService.update_ride(data, ride, wrong_user)
+        with pytest.raises(
+            ObjectDoesNotExist, match="Ride matching query does not exist"
+        ):
+            RideService.update_ride(ride.id, data, wrong_user)
 
     # Cancel ride
 

@@ -3,6 +3,11 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 
+from carpool.exceptions import (
+    BusinessValidationError,
+    ResourceNotFoundError,
+    ResourcePermissionError,
+)
 from carpool.models import Ride
 from carpool.enums.enums import RideStatus
 from carpool.services.request_service import RideRequestService
@@ -12,103 +17,69 @@ class RideService:
     """Service layer for ride business logic"""
 
     @staticmethod
-    def _validate_ride_creation(ride_data, user):
-        """Validate ride data before creation"""
-        # Ensure departure time is in the future
-        if ride_data.get("departure_datetime") <= timezone.now():
-            raise ValueError("Departure time must be in the future")
+    def _validate_ride_state(ride):
+        """
+        Validates the overall state of a Ride object,
+        whether newly created or recently updated.
+        """
+        if ride.status != RideStatus.SCHEDULED:
+            raise BusinessValidationError(f"Cannot modify a ride that is {ride.status}")
 
-        # Ensure seats are positive
-        if ride_data.get("available_seats", 0) < 0:
-            raise ValueError("You must have at least 1 free seat")
+        if ride.departure_datetime <= timezone.now():
+            raise BusinessValidationError("Departure time must be in the future")
 
-        # Ensure price is positive
-        if ride_data.get("price_per_seat", 0) < 0:
-            raise ValueError("You must set a price per seat")
+        if ride.available_seats <= 0:
+            raise BusinessValidationError("A ride must have at least 1 available seat")
 
-        # Check if user has any conflicting rides (optional)
-        conflicting_rides = Ride.objects.filter(
-            user=user,
+        if ride.price_per_seat < 0:
+            raise BusinessValidationError("Price per seat cannot be negative")
+
+        query = Ride.objects.filter(
+            user=ride.user,
             status=RideStatus.SCHEDULED,
             departure_datetime__range=(
-                ride_data["departure_datetime"] - timedelta(hours=2),
-                ride_data["departure_datetime"] + timedelta(hours=2),
+                ride.departure_datetime - timedelta(hours=2),
+                ride.departure_datetime + timedelta(hours=2),
             ),
-        ).exists()
+        )
 
-        if conflicting_rides:
-            raise ValueError("You already have a ride scheduled around this time")
+        if ride.pk:
+            query = query.exclude(pk=ride.pk)
 
-    @staticmethod
-    def _validate_ride_update(ride, data):
-        """Validate ride update data"""
-        # Can only update scheduled rides
-        if ride.status != RideStatus.SCHEDULED:
-            raise ValueError("Only scheduled rides can be updated")
-
-        # Check departure time if being updated
-        if "departure_datetime" in data:
-            if data["departure_datetime"] <= timezone.now():
-                raise ValueError("Departure time must be in the future")
-
-        # Check seats if being updated
-        if "available_seats" in data:
-            if data["available_seats"] < 0:
-                raise ValueError("Available seats cannot be negative")
-
-        # Check price if being updated
-        if "price_per_seat" in data and data["price_per_seat"] < 0:
-            raise ValueError("You must set a price per seat")
-
-    @staticmethod
-    def _validate_ride_cancelation(ride, user):
-        """Validate ride update data"""
-        # Can only update scheduled rides
-        if ride.user != user:
-            raise ValueError("Only scheduled rides can be updated")
+        if query.exists():
+            raise BusinessValidationError("Schedule conflict detected.")
 
     @classmethod
     @transaction.atomic
     def create_ride(cls, ride_data, user):
-        """
-        Create a new ride with validation
-        """
-        # Add user to data
-        ride_data["user"] = user
+        # Create instance in memory only (does not hit DB yet)
+        ride = Ride(**ride_data, user=user)
 
-        # Validate
-        cls._validate_ride_creation(ride_data, user)
+        # Validate the state of this new object
+        cls._validate_ride_state(ride)
 
-        try:
-            # Create the ride
-            ride = Ride.objects.create(**ride_data)
-
-            # Trigger any background tasks
-            # from carpool.tasks import notify_users_about_new_ride
-            # transaction.on_commit(
-            #     lambda: notify_users_about_new_ride.delay(ride.id)
-            # )
-
-            return ride
-        except Exception as e:
-            raise ValueError(f"Failed to create ride: {str(e)}")
+        # Now save to DB
+        ride.save()
+        return ride
 
     @classmethod
     @transaction.atomic
-    def update_ride(cls, update_data, instance, user):
+    def update_ride(cls, ride_id, update_data, user):
         """
-        Update an existing ride
+        Update an existing ride with row-level locking.
         """
-        if instance.user != user:
-            raise ValueError("Ride not found or you don't have permission")
 
-        # Validate update
-        cls._validate_ride_update(instance, update_data)
+        # 1. Fetch and Lock the ride
+        instance = Ride.objects.select_for_update().get(id=ride_id, user=user)
 
-        # Update fields
+        # Apply updates to the instance in memory
         for field, value in update_data.items():
             setattr(instance, field, value)
 
+        # Validate the FINAL state of the object
+        cls._validate_ride_state(instance)
+
+        # Save
         instance.save(update_fields=list(update_data.keys()) + ["updated_at"])
 
         return instance
@@ -119,17 +90,17 @@ class RideService:
         """
         Cancel a scheduled ride
         """
-        try:
-            ride = (
-                Ride.objects.select_for_update()
-                .select_related("user")
-                .get(id=ride_id, user=user, status=RideStatus.SCHEDULED)
-            )
-        except Ride.DoesNotExist:
-            raise ValueError("Scheduled ride not found or you don't have permission")
+        ride = (
+            Ride.objects.select_for_update()
+            .select_related("user")
+            .get(id=ride_id, status=RideStatus.SCHEDULED)
+        )
 
-        # Validate cancelation
-        cls._validate_ride_cancelation(ride, user)
+        # Specific Permission Error
+        if ride.user != user:
+            raise ResourcePermissionError(
+                "You do not have permission to cancel this ride."
+            )
 
         # Auto cancel all ride requests if they exist
         RideRequestService.cancel_ride_requests(ride_id=ride_id)

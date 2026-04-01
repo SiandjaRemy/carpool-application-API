@@ -39,7 +39,6 @@ class RideModelSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context["user"]
-        validated_data["user"] = user
 
         new_ride = RideService.create_ride(ride_data=validated_data, user=user)
 
@@ -95,10 +94,10 @@ class RideUpdateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         user = self.context["user"]
-        validated_data["user"] = user
+        ride_id = self.context["ride_id"]
 
         updated_ride = RideService.update_ride(
-            update_data=validated_data, instance=instance, user=user
+            ride_id=ride_id, update_data=validated_data, user=user
         )
 
         return updated_ride

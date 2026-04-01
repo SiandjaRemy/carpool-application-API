@@ -1,8 +1,12 @@
 import pytest
-from datetime import timedelta
+
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
+
+from datetime import timedelta
 from decimal import Decimal
 
+from carpool.exceptions import BusinessValidationError, ResourcePermissionError
 from carpool.services.reservation_service import ReservationService
 from carpool.enums.enums import RideStatus, ReservationPaymentStatus
 from carpool.tests.factories import (
@@ -27,7 +31,7 @@ class TestReservationService:
         ride = RideFactory(available_seats=4, price_per_seat=Decimal("30.50"))
 
         reservation = ReservationService.create_reservation(
-            ride=ride,
+            ride_id=ride.id,
             passenger=passenger,
             seats_requested=2,
             price_per_seat=ride.price_per_seat,
@@ -51,7 +55,7 @@ class TestReservationService:
         ride = RideFactory(available_seats=2)
 
         ReservationService.create_reservation(
-            ride=ride,
+            ride_id=ride.id,
             passenger=passenger,
             seats_requested=2,
             price_per_seat=ride.price_per_seat,
@@ -67,10 +71,11 @@ class TestReservationService:
         ride = RideFactory(status=RideStatus.CANCELLED, available_seats=4)
 
         with pytest.raises(
-            ValueError, match="Cannot reserve seats for a ride that is not scheduled"
+            BusinessValidationError,
+            match="Cannot create reservation for a ride that is not scheduled",
         ):
             ReservationService.create_reservation(
-                ride=ride,
+                ride_id=ride.id,
                 passenger=passenger,
                 seats_requested=2,
                 price_per_seat=ride.price_per_seat,
@@ -81,9 +86,11 @@ class TestReservationService:
         passenger = UserFactory()
         ride = RideFactory(available_seats=0, fully_reserved=True)
 
-        with pytest.raises(ValueError, match="This ride is fully reserved"):
+        with pytest.raises(
+            BusinessValidationError, match="This ride is already fully reserved"
+        ):
             ReservationService.create_reservation(
-                ride=ride,
+                ride_id=ride.id,
                 passenger=passenger,
                 seats_requested=2,
                 price_per_seat=ride.price_per_seat,
@@ -95,10 +102,10 @@ class TestReservationService:
         ride = RideFactory(available_seats=2)
 
         with pytest.raises(
-            ValueError, match="Only 2 seats available, but you requested 3"
+            BusinessValidationError, match="Only 2 seats are available for this ride"
         ):
             ReservationService.create_reservation(
-                ride=ride,
+                ride_id=ride.id,
                 passenger=passenger,
                 seats_requested=3,
                 price_per_seat=ride.price_per_seat,
@@ -110,10 +117,11 @@ class TestReservationService:
         ride = RideFactory(user=driver, available_seats=4)
 
         with pytest.raises(
-            ValueError, match="You cannot reserve seats for a ride you created"
+            BusinessValidationError,
+            match="You cannot reserve seats for a ride you created",
         ):
             ReservationService.create_reservation(
-                ride=ride,
+                ride_id=ride.id,
                 passenger=driver,
                 seats_requested=2,
                 price_per_seat=ride.price_per_seat,
@@ -153,7 +161,7 @@ class TestReservationService:
         reservation = ReservationFactory(passenger=passenger)
 
         with pytest.raises(
-            PermissionError, match="You can only cancel your own reservations"
+            ResourcePermissionError, match="You can only cancel your own reservations"
         ):
             ReservationService.cancel_reservation(
                 reservation_id=reservation.id, passenger=other_user
@@ -171,7 +179,7 @@ class TestReservationService:
             ride=ride, passenger=passenger, payment_status=ReservationPaymentStatus.PAID
         )
 
-        with pytest.raises(ValueError, match="already departed"):
+        with pytest.raises(BusinessValidationError, match="already departed"):
             ReservationService.cancel_reservation(
                 reservation_id=reservation.id, passenger=passenger
             )
@@ -189,7 +197,7 @@ class TestReservationService:
         )
 
         with pytest.raises(
-            ValueError,
+            BusinessValidationError,
             match="Cannot cancel paid reservation less than 2 hours before departure",
         ):
             ReservationService.cancel_reservation(
@@ -200,7 +208,7 @@ class TestReservationService:
         """Test cancelling non-existent reservation"""
         passenger = UserFactory()
 
-        with pytest.raises(ValueError, match="Reservation not found"):
+        with pytest.raises(ObjectDoesNotExist, match="matching query does not exist"):
             ReservationService.cancel_reservation(
                 reservation_id="00000000-0000-0000-0000-000000000000",
                 passenger=passenger,
@@ -241,7 +249,7 @@ class TestReservationService:
         reservation = ReservationFactory(passenger=passenger)
 
         with pytest.raises(
-            PermissionError, match="You can only pay for your own reservations"
+            ResourcePermissionError, match="You can only pay for your own reservations"
         ):
             ReservationService.pay_reservation(
                 reservation_id=reservation.id, passenger=other_user
@@ -264,7 +272,7 @@ class TestReservationService:
         )
 
         # Try paying again
-        with pytest.raises(ValueError, match="already paid"):
+        with pytest.raises(BusinessValidationError, match="already paid"):
             ReservationService.pay_reservation(
                 reservation_id=reservation.id, passenger=passenger
             )
@@ -282,7 +290,7 @@ class TestReservationService:
             passenger=passenger,
         )
 
-        with pytest.raises(ValueError, match="ride has started"):
+        with pytest.raises(BusinessValidationError, match="ride has started"):
             ReservationService.pay_reservation(
                 reservation_id=reservation.id, passenger=passenger
             )
@@ -291,7 +299,7 @@ class TestReservationService:
         """Test paying for non-existent reservation"""
         passenger = UserFactory()
 
-        with pytest.raises(ValueError, match="Reservation not found"):
+        with pytest.raises(ObjectDoesNotExist, match="matching query does not exist"):
             ReservationService.pay_reservation(
                 reservation_id="00000000-0000-0000-0000-000000000000",
                 passenger=passenger,
@@ -312,14 +320,14 @@ class TestReservationService:
 
         # Create some reservations via service rather than factories
         ReservationService.create_reservation(
-            ride=ride,
+            ride_id=ride.id,
             passenger=passenger1,
             seats_requested=2,
             price_per_seat=ride.price_per_seat,
         )
 
         ReservationService.create_reservation(
-            ride=ride,
+            ride_id=ride.id,
             passenger=passenger2,
             seats_requested=1,
             price_per_seat=ride.price_per_seat,
@@ -327,7 +335,7 @@ class TestReservationService:
 
         # Create a reservation to be cancelled
         to_be_cancelled = ReservationService.create_reservation(
-            ride=ride,
+            ride_id=ride.id,
             passenger=passenger3,
             seats_requested=1,
             price_per_seat=ride.price_per_seat,
@@ -376,7 +384,8 @@ class TestReservationService:
         ride = RideFactory(user=driver)
 
         with pytest.raises(
-            PermissionError, match="Only the ride owner can view reservation statistics"
+            ResourcePermissionError,
+            match="Only the ride owner can view reservation statistics",
         ):
             ReservationService.get_reservation_stats(ride.id, other_user)
 
@@ -384,7 +393,7 @@ class TestReservationService:
         """Test stats for non-existent ride"""
         user = UserFactory()
 
-        with pytest.raises(ValueError, match="Ride not found"):
+        with pytest.raises(ObjectDoesNotExist, match="matching query does not exist"):
             ReservationService.get_reservation_stats(
                 ride_id="00000000-0000-0000-0000-000000000000", user=user
             )
@@ -400,14 +409,14 @@ class TestReservationService:
         ride2 = RideFactory(available_seats=3)
 
         reservation1 = ReservationService.create_reservation(
-            ride=ride1,
+            ride_id=ride1.id,
             passenger=passenger,
             seats_requested=1,
             price_per_seat=ride1.price_per_seat,
         )
 
         reservation2 = ReservationService.create_reservation(
-            ride=ride2,
+            ride_id=ride2.id,
             passenger=passenger,
             seats_requested=2,
             price_per_seat=ride2.price_per_seat,
@@ -423,31 +432,34 @@ class TestReservationService:
         driver = UserFactory()
         passenger1 = UserFactory()
         passenger2 = UserFactory()
+        passenger3 = UserFactory()
 
         ride = RideFactory(user=driver, available_seats=5)
 
         # First reservation: 2 seats
         ReservationService.create_reservation(
-            ride=ride,
+            ride_id=ride.id,
             passenger=passenger1,
             seats_requested=2,
             price_per_seat=ride.price_per_seat,
         )
+        ride.refresh_from_db()
         assert ride.available_seats == 3
 
         # Second reservation: 2 seats
         ReservationService.create_reservation(
-            ride=ride,
+            ride_id=ride.id,
             passenger=passenger2,
             seats_requested=2,
             price_per_seat=ride.price_per_seat,
         )
+        ride.refresh_from_db()
         assert ride.available_seats == 1
 
         # Third reservation: 1 seat (filling the ride)
         ReservationService.create_reservation(
-            ride=ride,
-            passenger=passenger1,
+            ride_id=ride.id,
+            passenger=passenger3,
             seats_requested=1,
             price_per_seat=ride.price_per_seat,
         )

@@ -269,7 +269,10 @@ class TestRideRequestEndpoints:
         response = authenticated_client.patch(url, data)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "cannot be updated" in str(response.data["detail"]).lower()
+        assert (
+            "only pending requests can be modified"
+            in str(response.data["detail"]).lower()
+        )
 
     # ----------------------------------------------------------------------
     # Custom Actions
@@ -318,8 +321,7 @@ class TestRideRequestEndpoints:
             kwargs={"rides_pk": ride.id, "pk": ride_request.id},
         )
         response = authenticated_client.patch(url)
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_accept_request_insufficient_seats(
         self, authenticated_client, passenger_client, db
@@ -452,4 +454,4 @@ class TestRideRequestEndpoints:
         )
         response = authenticated_client.patch(url)
 
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_404_NOT_FOUND
