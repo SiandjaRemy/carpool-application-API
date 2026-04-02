@@ -1,4 +1,5 @@
 from datetime import timedelta
+import logging
 
 from django.db import transaction
 from django.utils import timezone
@@ -8,9 +9,13 @@ from carpool.exceptions import (
     ResourceNotFoundError,
     ResourcePermissionError,
 )
-from carpool.models import Ride
-from carpool.enums.enums import RideStatus
+from carpool.models import Ride, RideRequest
+from carpool.enums.enums import RequestStatus, ReservationPaymentStatus, RideStatus
+
+from carpool.models.reservation import Reservation
 from carpool.services.request_service import RideRequestService
+
+celery_logger = logging.getLogger("celery")
 
 
 class RideService:
@@ -126,3 +131,123 @@ class RideService:
             return ride.available_seats >= requested_seats
         except Ride.DoesNotExist:
             return False
+
+
+class RideBatchService:
+    """System-level operations for carpool maintenance and notifications."""
+
+    # --- SCHEDULED MAINTENANCE TASKS ---
+
+    @classmethod
+    @transaction.atomic
+    def auto_start_rides(cls):
+        """
+        Transition SCHEDULED -> IN_PROGRESS 10 mins before departure.
+        Also expires any lingering PENDING requests for these rides.
+        """
+        threshold = timezone.now() + timedelta(minutes=10)
+
+        rides_starting = Ride.objects.select_for_update().filter(
+            status=RideStatus.SCHEDULED, departure_datetime__lte=threshold
+        )
+
+        # 1. Update Ride Status
+        count = rides_starting.update(
+            status=RideStatus.IN_PROGRESS, updated_at=timezone.now()
+        )
+
+        # 2. Expire PENDING requests (Atomic cascade)
+        RideRequest.objects.filter(
+            ride__in=rides_starting, status=RequestStatus.PENDING
+        ).update(status=RequestStatus.EXPIRED, updated_at=timezone.now())
+
+        return f"Started {count} rides and expired associated pending requests."
+
+    @classmethod
+    def auto_expire_past_rides(cls):
+        """Clean up rides that never started or were forgotten."""
+        count = Ride.objects.filter(
+            status=RideStatus.SCHEDULED, departure_datetime__lt=timezone.now()
+        ).update(status=RideStatus.EXPIRED, updated_at=timezone.now())
+        return f"Expired {count} stale rides."
+
+    # --- NOTIFICATION & REMINDER TASKS ---
+
+    @classmethod
+    def send_departure_reminders(cls):
+        """
+        Remind passengers of SCHEDULED rides departing in 30-60 mins.
+        Uses prefetched reservations to reach the final passenger list.
+        """
+        now = timezone.now()
+        window_start, window_end = now + timedelta(minutes=30), now + timedelta(
+            minutes=60
+        )
+
+        upcoming_rides = Ride.objects.filter(
+            status=RideStatus.SCHEDULED,
+            departure_datetime__range=(window_start, window_end),
+            departure_reminder_sent=False,  # I still recommend a DB field!
+        ).prefetch_related("reservations__passenger")
+
+        for ride in upcoming_rides:
+            passengers = [res.passenger for res in ride.reservations.all()]
+            # Trigger notification logic here (e.g., Firebase/SMS)
+            # task_bulk_notify.delay(passengers, "Your ride departs soon!")
+
+        upcoming_rides.update(departure_reminder_sent=True)
+        return f"Departure reminders sent for {upcoming_rides.count()} rides."
+
+    @classmethod
+    def remind_unpaid_reservations(cls):
+        """
+        Find unpaid reservations 2-3 hours before departure.
+        """
+        now = timezone.now()
+        window_start, window_end = now + timedelta(hours=2), now + timedelta(hours=3)
+
+        unpaid_reservations = Reservation.objects.filter(
+            ride__departure_datetime__range=(window_start, window_end),
+            ride__status=RideStatus.SCHEDULED,
+            payment_status=ReservationPaymentStatus.PAYMENT_DISABLED,
+        ).select_related("passenger", "ride")
+
+        for res in unpaid_reservations:
+            # task_notify_payment_required.delay(res.passenger.id, res.ride.id)
+            pass
+
+        return f"Payment reminders sent for {unpaid_reservations.count()} reservations."
+
+    @classmethod
+    def request_review_reminders(cls):
+        """
+        Triggered for rides that COMPLETED 2 hours ago.
+        Requires 'arrival_datetime' or an estimation logic.
+        """
+        two_hours_ago = timezone.now() - timedelta(hours=2)
+
+        # Only remind users who haven't been asked yet
+        completed_rides = Ride.objects.filter(
+            status=RideStatus.COMPLETED,
+            updated_at__lte=two_hours_ago,
+            review_reminder_sent=False,
+        ).prefetch_related("reservations__passenger")
+
+        for ride in completed_rides:
+            # Notify driver about passengers, notify passengers about driver
+            pass
+
+        completed_rides.update(review_reminder_sent=True)
+        return f"Review prompts queued for {completed_rides.count()} rides."
+
+    # --- ONE-OFF ASYNC TASKS (Triggered via API/View) ---
+
+    @classmethod
+    def notify_ride_cancellation(cls, ride_id):
+        """One-off: Notify all involved parties when a driver cancels."""
+        ride = Ride.objects.prefetch_related("reservations__passenger").get(id=ride_id)
+
+        recipients = [res.passenger for res in ride.reservations.all()]
+        # task_send_cancellation_email.delay(recipients, ride_id)
+
+        celery_logger.info(f"Cancellation notifications queued for ride {ride_id}")

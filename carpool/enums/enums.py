@@ -5,6 +5,7 @@ class RequestStatus(models.TextChoices):
     PENDING = "pending", "Pending"
     ACCEPTED = "accepted", "Accepted"
     REJECTED = "rejected", "Rejected"
+    EXPIRED = "expired", "Expired"
     CANCELLED = "cancelled", "Cancelled"
     DRIVER_CANCELLED = "cancelled_by_driver", "Cancelled by the driver"
 

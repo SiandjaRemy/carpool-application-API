@@ -19,6 +19,9 @@ class Ride(TimeStampedModel):
     departure_town = models.CharField(max_length=100)
     arrival_town = models.CharField(max_length=100)
     departure_datetime = models.DateTimeField()
+    # This is set after the ride completion
+    arrival_datetime = models.DateTimeField(blank=True, null=True)
+
     available_seats = models.PositiveSmallIntegerField(
         validators=[
             MinValueValidator(1),
@@ -34,6 +37,7 @@ class Ride(TimeStampedModel):
         max_length=20, choices=RideStatus.choices, default=RideStatus.SCHEDULED
     )
     fully_reserved = models.BooleanField(default=False)
+    reminder_sent = models.BooleanField(default=False)
 
     @property
     def seats_available(self):
