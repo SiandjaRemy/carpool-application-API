@@ -43,6 +43,14 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "django_celery_results",
     "corsheaders",
+    # Django control pannels
+    "dj_cache_panel",
+    "dj_celery_panel",
+    "dj_redis_panel",
+    "dj_signals_panel",
+    "dj_urls_panel",
+    # Django Control Room
+    "dj_control_room",
 ]
 
 
@@ -137,13 +145,6 @@ DJOSER = {
     },
 }
 
-
-# Authentication Backends
-# Tell Django to use Google alongside standard Email/Password
-AUTHENTICATION_BACKENDS = (
-    "social_core.backends.google.GoogleOAuth2",
-    "django.contrib.auth.backends.ModelBackend",
-)
 
 # Google Social Auth Credentials
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("GOOGLE_CLIENT_ID")
@@ -258,3 +259,35 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 # Celery backend results
 result_backend = "django-db"
 broker_connection_retry_on_startup = True
+
+
+QSTASH_URL = os.environ.get("QSTASH_URL")
+QSTASH_TOKEN = os.environ.get("QSTASH_TOKEN")
+QSTASH_CURRENT_SIGNING_KEY = os.environ.get("QSTASH_CURRENT_SIGNING_KEY")
+QSTASH_NEXT_SIGNING_KEY = os.environ.get("QSTASH_NEXT_SIGNING_KEY")
+
+
+# Control room redis pannel setup
+DJ_REDIS_PANEL_SETTINGS = {
+    "ALLOW_KEY_DELETE": False,
+    "ALLOW_KEY_EDIT": False,
+    "ALLOW_TTL_UPDATE": False,
+    "CURSOR_PAGINATED_SCAN": False,
+    "CURSOR_PAGINATED_COLLECTIONS": False,
+    "socket_timeout": 5.0,
+    "socket_connect_timeout": 5.0,
+    "INSTANCES": {
+        "local_redis": {
+            "description": "Local Redis Instance",
+            "host": "127.0.0.1",
+            "port": 6379,
+            "features": {
+                "ALLOW_KEY_DELETE": True,
+                "ALLOW_KEY_EDIT": True,
+                "ALLOW_TTL_UPDATE": True,
+                "CURSOR_PAGINATED_SCAN": True,
+                "CURSOR_PAGINATED_COLLECTIONS": True,
+            },
+        },
+    },
+}

@@ -2,6 +2,7 @@ from django.urls import path, include
 
 from rest_framework_nested import routers
 
+from carpool.qstash_tasks import QStashTaskView
 from carpool.views import alert_views, request_views, reservation_views, ride_views
 
 
@@ -29,4 +30,5 @@ ride_router.register(
 urlpatterns = [
     path("", include(router.urls)),
     path("", include(ride_router.urls)),
+    path("tasks/<str:task_name>/", QStashTaskView.as_view(), name="qstash_tasks"),
 ]

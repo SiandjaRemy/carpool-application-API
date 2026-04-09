@@ -35,6 +35,15 @@ urlpatterns = [
     re_path(
         r"^redoc/$", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"
     ),
+    # Panel URLs (include each panel you installed)
+    path("admin/dj-redis-panel/", include("dj_redis_panel.urls")),
+    path("admin/dj-cache-panel/", include("dj_cache_panel.urls")),
+    path("admin/dj-urls-panel/", include("dj_urls_panel.urls")),
+    path("admin/dj-celery-panel/", include("dj_celery_panel.urls")),
+    path("admin/dj-signals-panel/", include("dj_signals_panel.urls")),
+    # Control Room dashboard
+    path("admin/dj-control-room/", include("dj_control_room.urls")),
+    #
     path("admin/", admin.site.urls),
     # API versioning
     path("api/v1/", include("v1.urls", namespace="v1")),

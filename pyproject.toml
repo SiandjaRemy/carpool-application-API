@@ -7,6 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
     "celery>=5.6.2",
     "concurrent-log-handler>=0.9.29",
+    "dj-control-room[all]>=1.2.0",
     "dj-database-url>=3.1.2",
     "django-celery-beat>=2.9.0",
     "django-celery-results>=2.6.0",
@@ -24,6 +25,7 @@ dependencies = [
     "pytest-freezer>=0.4.9",
     "python-dotenv>=1.2.2",
     "python-json-logger>=4.0.0",
+    "qstash>=3.4.0",
 ]
 
 [dependency-groups]
