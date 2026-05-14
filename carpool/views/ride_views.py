@@ -11,7 +11,6 @@ from Carpool_System.core.caching import CacheMixin
 from Carpool_System.core.mixins import UUIDValidationMixin
 from Carpool_System.core.throttling import ActionScopedThrottleMixin
 
-from carpool.enums.enums import RideStatus
 from carpool.permissions import IsCreatorOrReadOnly, IsRideOwner
 
 from carpool.models.ride import Ride
@@ -45,16 +44,7 @@ class RideModelViewset(
     }
 
     def get_queryset(self):
-        current_time = timezone.now()
-        queryset = (
-            Ride.objects.select_related("user")
-            .filter(
-                status=RideStatus.SCHEDULED,
-                departure_datetime__gte=current_time,
-                available_seats__gt=0,
-            )
-            .order_by("-created_at")
-        )
+        queryset = Ride.objects.upcoming()
         return queryset
 
     def get_serializer_context(self):

@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+
 import os
 import sys
+import django_stubs_ext
+
+# Apply the monkeypatch to allow generic type hinting on Django classes
+django_stubs_ext.monkeypatch()
 
 
 def main():

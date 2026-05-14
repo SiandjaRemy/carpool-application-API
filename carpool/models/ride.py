@@ -5,8 +5,9 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 from carpool.enums.enums import RideStatus
-from carpool.models.base import TimeStampedModel
+from carpool.managers import RideManager
 
+from carpool.models.base import TimeStampedModel
 
 User = get_user_model()
 
@@ -38,6 +39,8 @@ class Ride(TimeStampedModel):
     )
     fully_reserved = models.BooleanField(default=False)
     reminder_sent = models.BooleanField(default=False)
+
+    objects: RideManager = RideManager()
 
     @property
     def seats_available(self):

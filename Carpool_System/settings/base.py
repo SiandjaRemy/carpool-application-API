@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "dj_urls_panel",
     # Django Control Room
     "dj_control_room",
+    "django_filters",
 ]
 
 
